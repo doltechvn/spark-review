@@ -6,7 +6,7 @@ window.CATALOG = {
   units: [
     { k: "A", name: "Hello School!", color: ["#e2794a", "#c25e30"], cover: "media/bag.png", lessons: [
       { id: "A1", title: "Sparky's First Day", ready: true, pic: "media/scenes/a1-map.jpg" },
-      { id: "A2", title: "Letter P Day" }, { id: "A3", title: "P's Secret Sound" }, { id: "A4", title: "Letter N Day" },
+      { id: "A2", title: "Letter P Day", ready: true, pic: "media/scenes/a2-intro.jpg" }, { id: "A3", title: "P's Secret Sound" }, { id: "A4", title: "Letter N Day" },
       { id: "A5", title: "N's Secret Sound" }, { id: "A6", title: "Hello School Showcase" }] },
     { k: "B", name: "My Toys", color: ["#4fa396", "#357d72"], cover: "media/covers/cover-b.png", lessons: [
       { id: "B1", title: "Sparky's Toy Box" }, { id: "B2", title: "Letter T Day" }, { id: "B3", title: "More Toys with Sparky" },
@@ -29,6 +29,7 @@ window.CATALOG = {
     "home-unit-b":   { en: "Unit B. My Toys!" },
     "home-unit-c":   { en: "Unit C. Colours and Numbers!" },
     "home-unit-d":   { en: "Unit D. My Body!" },
-    "home-a1":       { en: "Sparky's First Day! Let's go!" }
+    "home-a1":       { en: "Sparky's First Day! Let's go!" },
+    "home-a2":       { en: "Letter P Day! Let's go!" }
   }
 };

@@ -49,6 +49,9 @@ window.WARDROBE = {
   ITEMS: {
     "wear-cap":   { lesson: "A1", name: "school hat",   img: "media/wear/wear-cap.png",   s: 1.05, dx: 0,  dy: 3 },
     "wear-bow":   { lesson: "A1", name: "bow",          img: "media/wear/wear-bow.png",   s: 0.62, dx: -8, dy: 1 },
-    "wear-crown": { lesson: "A1", name: "flower crown", img: "media/wear/wear-crown.png", s: 1.0,  dx: 0,  dy: 4 }
+    "wear-crown": { lesson: "A1", name: "flower crown", img: "media/wear/wear-crown.png", s: 1.0,  dx: 0,  dy: 4 },
+    "wear-beret":      { lesson: "A2", name: "beret",          img: "media/wear/wear-beret.png",      s: 1.0, dx: 6, dy: 2 },
+    "wear-propeller":  { lesson: "A2", name: "propeller cap",  img: "media/wear/wear-propeller.png",  s: 0.9,  dx: 0, dy: 4 },
+    "wear-partyhat":   { lesson: "A2", name: "party hat",      img: "media/wear/wear-partyhat.png",   s: 0.62, dx: 2, dy: 4 }
   }
 };

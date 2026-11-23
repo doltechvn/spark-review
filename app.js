@@ -86,7 +86,7 @@
   let stopClip = () => {};
   const word = (w, rate) => clip(L.words[w].audio, rate);
   const sentence = (w, rate) => play(L.words[w].sentence, { rate });
-  function preload() { if (!ac) return; Object.values(L.letters).forEach(x => { bufCache[x.name] ||= fetch(x.name).then(r => r.arrayBuffer()).then(b => ac.decodeAudioData(b)); bufCache[x.sound] ||= fetch(x.sound).then(r => r.arrayBuffer()).then(b => ac.decodeAudioData(b)); }); }
+  function preload() { if (!ac) return; Object.values(L.letters).forEach(x => [x.name, x.sound].filter(Boolean).forEach(u => { bufCache[u] ||= fetch(u).then(r => r.arrayBuffer()).then(b => ac.decodeAudioData(b)); })); }
   /* tên + âm chữ: LUÔN là bản thu đã duyệt trong lesson (media/letters/), không đọc máy */
   const letterName = (l, rate) => clip(L.letters[l].name, rate);
   const letterSound = (l, rate) => clip(L.letters[l].sound, rate);
@@ -405,10 +405,11 @@
       field.innerHTML = "";
       const xs = [22, 50, 78];
       const btns = it.options.map((l, i) => at(h(`<button class="bubbleL" style="--d:${i * .45}s" data-v="${l}">${l}</button>`), xs[i], 57));
-      const prompt = (rate) => letterName(it.name, rate);
+      const snd = it.by === "sound", hear = (rate) => snd ? letterSound(it.name, rate) : letterName(it.name, rate);
+      const prompt = (rate) => hear(rate);
       const L1 = listen(prompt); lock(true); await L1.play(); lock(true);
-      const tries = await choose({ answer: it.name, buttons: btns, prompt, skill: task.skill, label: it.name.toUpperCase(), first,
-        onRight: async (b) => { sfx.pop(); b.classList.add("popped"); await letterName(it.name); await wait(250); await praise(); } });
+      const tries = await choose({ answer: it.name, buttons: btns, prompt, skill: task.skill, label: snd ? "/" + it.name + "/" : it.name.toUpperCase(), first,
+        onRight: async (b) => { sfx.pop(); b.classList.add("popped"); await hear(); await wait(250); await praise(); } });
       L1.remove(); return tries;
     });
   };
@@ -629,6 +630,246 @@
       k++; progress(k / task.items.length);
     }
   };
+
+
+  /* ================= A2 (23/11) ================= */
+
+  /* chữ MỚI: chỉ TÊN + HÌNH (P to, p nhỏ) — chưa có âm nên không có nút 👂 */
+  T.meetLetter = async (task) => {
+    const l = task.letter;
+    lock(true); await say(task.ask, { pose: "cheer" });
+    const card = at(h(`<div class="tcard reveal newl"><div class="big"><span class="up">${l.toUpperCase()}</span><span class="lo">${l}</span></div>
+      <div class="lb"><button class="eye" aria-label="Tên chữ">👁️</button></div></div>`), 50, 50);
+    sfx.pop(); burst(card, 10);
+    const eye = $(".eye", card);
+    eye.classList.add("glow"); await say("ph-name", { pose: "talk" }); setPose("wave");
+    caption({ en: l.toUpperCase() }); await letterName(l); await wait(300);
+    await say("ph-saywithme", { pose: "talk" }); caption({ en: l.toUpperCase() }); await letterName(l); setPose("listen"); await echo(card);
+    eye.classList.remove("glow"); progress(.4);
+    // hình chữ: P to → p nhỏ
+    const up = $(".up", card), lo = $(".lo", card);
+    await say("a2-big-small", { pose: "talk" }).then(() => {});
+    up.classList.add("glowl"); await wait(QA ? 20 : 500); up.classList.remove("glowl");
+    lo.classList.add("glowl"); await wait(QA ? 20 : 500); lo.classList.remove("glowl");
+    await say("a2-hands", { pose: "clap" }); progress(.7);
+    // bé tự chạm 👁️ kiểm tra
+    await say("ph-tapeye", { pose: "talk" }); setPose("listen");
+    const unhand = hand(eye);
+    if (QA) field.dataset.answer = eye.className;
+    lock(false);
+    const stopN = nudge({ replay: () => say("ph-tapeye", { pose: "talk" }), target: eye, blink: [eye] });
+    await new Promise(res => eye.onclick = res);
+    stopN(); eye.onclick = null; unhand(); lock(true);
+    eye.classList.add("glow"); await letterName(l); eye.classList.remove("glow"); sfx.ding();
+    await praise(); progress(1); lock(false);
+  };
+
+  /* TÔ CHỮ: 4 dòng kẻ (đầu – giữa – chân – đuôi); nét đánh số + chấm bắt đầu. Sparky tô mẫu từng nét đúng thứ tự,
+     rồi bé dùng ngón tay tô — nét nào phủ ≥ 75 % điểm thì nét đó xanh, sang nét sau. Chờ lâu → Sparky tô mẫu lại nét đang làm. */
+  const STROKES = {   // toạ độ khung 100 × 140: dòng đầu 15, giữa 57, chân 100, đuôi 135
+    P: ["M32 15 L32 100", "M32 15 C 84 15, 84 57, 32 57"],
+    p: ["M34 57 L34 135", "M34 62 C 80 44, 82 104, 34 97"]
+  };
+  T.trace = async (task) => {
+    lock(true); await say(task.ask, { pose: "talk" });
+    let k = 0;
+    for (const L0 of task.letters) {
+      field.innerHTML = "";
+      const paths = STROKES[L0];
+      const pane = at(h(`<div class="tracepane"><svg viewBox="0 0 100 140" class="tsvg">
+          <line x1="4" x2="96" y1="15" y2="15" class="tl"/><line x1="4" x2="96" y1="57" y2="57" class="tl mid"/><line x1="4" x2="96" y1="100" y2="100" class="tl base"/><line x1="4" x2="96" y1="135" y2="135" class="tl"/>
+          ${paths.map((d, i) => `<path d="${d}" class="guide" data-i="${i}"/>`).join("")}
+          ${paths.map((d, i) => `<path d="${d}" class="done" data-i="${i}"/>`).join("")}
+          <g class="ink"></g>${paths.map((_, i) => `<g class="start" data-i="${i}"><circle r="5.2"/><text dy="2.1">${i + 1}</text></g>`).join("")}
+          <circle class="pen" r="4.2"/></svg></div>`), 50, 45);
+      const svg = $("svg", pane), guides = $$(".guide", svg), dones = $$(".done", svg), starts = $$(".start", svg), pen = $(".pen", svg), ink = $(".ink", svg);
+      // số thứ tự nét đặt CẠNH điểm bắt đầu (nét 1 bên trái, nét 2 bên phải-trên) — 2 nét chung điểm đầu không che nhau
+      const OFF = [[-9, 1], [8, -7]];
+      guides.forEach((g, i) => { const p0 = g.getPointAtLength(0), o = OFF[i] || [0, 0]; starts[i].setAttribute("transform", `translate(${p0.x + o[0]},${p0.y + o[1]})`); });
+      dones.forEach(d => { const len = d.getTotalLength(); d.style.strokeDasharray = len; d.style.strokeDashoffset = len; });
+      const demo = async (i) => {   // bút mẫu chạy dọc nét i, vẽ dần màu
+        if (QA) return wait(20);   // khung ẩn: requestAnimationFrame không chạy
+        const g = guides[i], len = g.getTotalLength(), d = dones[i]; pen.style.opacity = 1; d.classList.add("demo");
+        const T0 = performance.now(), dur = QA ? 30 : 1300;
+        // setTimeout (không dùng requestAnimationFrame): vẫn chạy khi tab/khung bị ẩn, không kẹt bài
+        await new Promise(res => { const step = () => { const f = Math.min(1, (performance.now() - T0) / dur), pt = g.getPointAtLength(f * len);
+          pen.setAttribute("cx", pt.x); pen.setAttribute("cy", pt.y); d.style.strokeDashoffset = len * (1 - f); f < 1 ? setTimeout(step, 16) : res(); }; step(); });
+        await wait(250); pen.style.opacity = 0; d.style.strokeDashoffset = len; d.classList.remove("demo");
+      };
+      await say(L0 === "P" ? "a2-trace-big" : "a2-trace-small", { pose: "talk" });
+      for (let i = 0; i < paths.length; i++) { starts[i].classList.add("now"); await demo(i); starts[i].classList.remove("now"); await wait(200); }
+      await say("a2-your-turn", { pose: "talk" }); setPose("listen");
+      // bé tô
+      const rec = { skill: task.skill, item: L0 === "P" ? "P to" : "p nhỏ", tries: 1 };
+      for (let i = 0; i < paths.length; i++) {
+        const g = guides[i], len = g.getTotalLength(), N = 36, pts = Array.from({ length: N }, (_, j) => g.getPointAtLength(len * j / (N - 1)));
+        const hit = new Array(N).fill(false);
+        starts.forEach((s, j) => s.classList.toggle("now", j === i)); guides.forEach((x, j) => x.classList.toggle("cur", j === i));
+        lock(false);
+        const stopN = nudge({ replay: () => demo(i), target: starts[i], blink: [] });
+        await new Promise(res => {
+          if (QA) return setTimeout(res, 40);
+          let line = null, down = false;
+          const P = (ev) => { const m = svg.getScreenCTM().inverse(), q = new DOMPoint(ev.clientX, ev.clientY).matrixTransform(m); return q; };
+          const mark = (q) => { pts.forEach((pt, j) => { if (!hit[j] && Math.hypot(pt.x - q.x, pt.y - q.y) < 9) hit[j] = true; });
+            const f = hit.filter(Boolean).length / N; dones[i].style.strokeDashoffset = len * (1 - Math.max(...hit.map((x, j) => x ? (j + 1) / N : 0))); return f; };
+          svg.onpointerdown = (ev) => { if (app.classList.contains("locked")) return; down = true; try { svg.setPointerCapture(ev.pointerId); } catch (e) {}
+            line = document.createElementNS("http://www.w3.org/2000/svg", "polyline"); ink.appendChild(line); const q = P(ev); line.setAttribute("points", `${q.x},${q.y}`); mark(q); };
+          svg.onpointermove = (ev) => { if (!down) return; const q = P(ev); line.setAttribute("points", line.getAttribute("points") + ` ${q.x},${q.y}`); mark(q); };
+          svg.onpointerup = svg.onpointercancel = () => { if (!down) return; down = false;
+            const f = hit.filter(Boolean).length / N;
+            if (f >= .75 && hit[N - 1]) { res(); }
+            else { rec.tries++; ink.innerHTML = ""; hit.fill(false); dones[i].style.strokeDashoffset = len; sfx.boop(); } };
+        });
+        stopN(); svg.onpointerdown = svg.onpointermove = svg.onpointerup = svg.onpointercancel = null;
+        ink.innerHTML = ""; dones[i].style.strokeDashoffset = 0; dones[i].classList.add("ok"); starts[i].classList.remove("now"); sfx.ding(); burst(starts[i], 6);
+        lock(true);
+      }
+      log.push(rec);
+      guides.forEach(x => x.classList.remove("cur"));
+      await letterName(L0.toLowerCase()); await praise();
+      k++; progress(k / task.letters.length);
+    }
+    lock(false);
+  };
+
+  /* Find 'p'! lưới chữ dễ nhầm (b, d, q…): chạm hết chữ đích; chạm nhầm → đỏ + rung */
+  T.findGrid = async (task) => {
+    const t = task.target, need = task.grid.filter(x => x === t).length;
+    const grid = at(h(`<div class="lgrid">${task.grid.map((x, i) => `<button class="lcell" data-v="${x}" data-i="${i}">${x}</button>`).join("")}</div>`), 50, 54);
+    const cells = $$(".lcell", grid);
+    lock(true); await say(task.ask, { pose: "talk" }); setPose("listen");
+    const rec = { skill: task.skill, item: t, tries: 1 }; let found = 0;
+    if (QA) field.dataset.answer = t;
+    lock(false);
+    let stopN = nudge({ replay: () => say(task.ask, { pose: "talk" }), target: cells.find(c => c.dataset.v === t), blink: cells });
+    await new Promise(res => cells.forEach(c => c.onclick = async () => {
+      if (app.classList.contains("locked") || c.classList.contains("right")) return;
+      stopN();
+      if (c.dataset.v === t) {
+        c.classList.add("right"); c.dataset.v = ""; burst(c, 6); sfx.ding(); found++; progress(found / need);
+        letterName(t);
+        if (QA) setTimeout(() => field.dataset.answer = t, 0);   // qaAct xoá answer SAU khi bấm → đặt lại ở lượt sau
+        if (found >= need) return res();
+      } else {
+        rec.tries++; sfx.boop(); shake(c); c.classList.add("wrong"); lock(true); await say("a2-not-p", { pose: "oops" }); c.classList.remove("wrong"); setPose("listen"); lock(false);
+      }
+      const left = cells.find(x => x.dataset.v === t);
+      stopN = nudge({ replay: () => say(task.ask, { pose: "talk" }), target: left, blink: cells.filter(x => !x.classList.contains("right")) });
+    }));
+    stopN(); log.push(rec);
+    lock(true); await say("a2-found-all", { pose: "cheer" }); sfx.tada(); lock(false);
+  };
+
+  /* thẻ CHỮ — tách âm (break phonics). A2-1 (23/11): mỗi phần = [chữ, âm rời] → phần sáng nào phát âm đó (media/phonemes/) */
+  const parts = (w) => (L.splits?.[w] || [[w, null]]).map(p => Array.isArray(p) ? p : [p, null]);
+  const phon = (id) => id ? clip(`media/phonemes/${id}.mp3`) : wait(QA ? 10 : 380);
+  const wtext = (w, cls = "") => `<span class="wtext ${cls}">${parts(w).map(([t, ph]) => `<i data-ph="${ph || ""}">${t}</i>`).join("")}</span>`;
+  async function readOut(card, w) {   // từng phần sáng + phát âm rời, rồi cả từ sáng + đọc cả từ
+    if (L.breakPhonics !== false) {   // breakPhonics: false trong lessons/<bài>.js → chỉ đọc cả từ
+      for (const p of $$(".wtext i", card)) { p.classList.add("lit"); await phon(p.dataset.ph); await wait(QA ? 5 : 160); p.classList.remove("lit"); }
+      await wait(QA ? 5 : 200);
+    }
+    card.classList.add("whole"); await word(w); await wait(200); card.classList.remove("whole");
+  }
+  /* chạm từng phần → nghe âm đó; chạm hình → nghe tách âm + cả từ (bé tự đọc lại) */
+  function tapParts(card, w) {
+    const busyPlay = async (fn) => { if (app.classList.contains("busy") || app.classList.contains("locked")) return; app.classList.add("busy"); await fn(); app.classList.remove("busy"); };
+    if (L.breakPhonics === false) { const wt = $(".wtext", card); if (wt) { wt.classList.add("tap"); wt.onclick = () => busyPlay(() => readOut(card, w)); } }   // không tách âm: chạm chữ = nghe cả từ
+    else $$(".wtext i", card).forEach(p => { p.classList.add("tap"); p.onclick = (ev) => { ev.stopPropagation(); busyPlay(async () => { p.classList.add("lit"); await phon(p.dataset.ph); p.classList.remove("lit"); }); }; });
+    const im = $("img", card); if (im) im.onclick = () => busyPlay(() => readOut(card, w));
+  }
+  /* Đọc cùng Sparky — A2-1: mỗi lượt CHỈ 1 hình + 1 chữ: b · a · g (âm rời) → "bag" (2 lần) → bé đọc theo → bé tự chạm nghe lại → ➜ */
+  T.readWords = async (task) => {
+    lock(true); await say(task.ask, { pose: "talk" });
+    let k = 0;
+    for (const w of task.words) {
+      field.innerHTML = "";
+      const c = at(h(`<div class="card rword one" data-w="${w}"><img src="${img(w)}" alt="">${wtext(w)}</div>`), 50, 46);
+      sfx.pop(); await wait(300);
+      c.classList.add("glow"); await readOut(c, w); await wait(400); await readOut(c, w); c.classList.remove("glow");
+      setPose("listen"); await echo(c);
+      tapParts(c, w);
+      k++; progress(k / task.words.length);
+      lock(false); await go("➜"); lock(true);
+    }
+    lock(false);
+  };
+  /* Đọc chữ → chạm hình: chữ to trong khung vàng (KHÔNG đọc to trước), đáp án = hình không chữ */
+  T.readMatch = async (task) => {
+    lock(true); await say(task.ask);
+    await runQueue(task.items, async (it, first) => {
+      field.innerHTML = "";
+      const q = qbox(33, `<div class="card rword solo" data-w="${it.word}">${wtext(it.word, "big")}</div>`);
+      const a = abox(58);
+      const btns = it.options.map(w => { const b = h(`<button class="card pic picb" data-v="${w}"><img src="${img(w)}" alt=""></button>`); a.appendChild(b); return b; });
+      const prompt = () => say("a2-read-it", { pose: "think" });
+      setPose("listen"); lock(false);
+      const tries = await choose({ answer: it.word, buttons: btns, prompt, skill: task.skill, label: it.word, first,
+        onRight: async () => { sfx.ding(); await readOut($(".rword", q), it.word); await praise(); } });
+      return tries;
+    });
+  };
+  /* Read & Match: hình to → chọn nhãn chữ đúng → nhãn bay vào dưới hình */
+  T.label = async (task) => {
+    lock(true); await say(task.ask);
+    await runQueue(task.items, async (it, first) => {
+      field.innerHTML = "";
+      const q = qbox(36, `<div class="card pic lbpic"><img src="${img(it.show)}" alt=""><span class="lslot"></span></div>`);
+      const a = abox(65);
+      const btns = it.options.map(w => { const b = h(`<button class="card wbtn" data-v="${w}">${wtext(w)}</button>`); a.appendChild(b); return b; });
+      const prompt = () => say("a2-label", { pose: "think" });
+      setPose("listen"); lock(false);
+      const tries = await choose({ answer: it.show, buttons: btns, prompt, skill: task.skill, label: it.show, first,
+        onRight: async (b) => { sfx.ding(); const slot = $(".lslot", q); slot.innerHTML = wtext(it.show); slot.classList.add("on"); b.classList.add("faded"); await readOut(slot, it.show); await praise(); } });
+      return tries;
+    });
+  };
+  /* Tick or Cross: hình + câu "It's a …" (chữ + tiếng) → ✓ đúng / ✗ sai; sai thì Sparky nói lại câu đúng */
+  T.tick = async (task) => {
+    lock(true); await say(task.ask);
+    await runQueue(task.items, async (it, first) => {
+      field.innerHTML = "";
+      const ok = it.show === it.say;
+      const q = qbox(30, `<img class="qimg" src="${img(it.show)}" alt=""><div class="qrow"><b>It's a ${it.say}.</b><button class="qspk always" aria-label="Nghe câu">🔊</button></div>`);
+      const a = at(h(`<div class="tickrow"><button class="tickb yes" data-v="yes" aria-label="Đúng">✓</button><button class="tickb no" data-v="no" aria-label="Sai">✗</button></div>`), 50, 60);
+      const btns = $$(".tickb", a);
+      const prompt = () => sentence(it.say);
+      $(".qspk", q).onclick = async () => { if (app.classList.contains("busy")) return; app.classList.add("busy"); q.classList.add("glow"); await prompt(); q.classList.remove("glow"); app.classList.remove("busy"); };
+      setPose("listen"); q.classList.add("glow"); await prompt(); q.classList.remove("glow");
+      const tries = await choose({ answer: ok ? "yes" : "no", buttons: btns, prompt, skill: task.skill, label: `${it.show}: "It's a ${it.say}"`, first,
+        onRight: async () => { if (ok) { await say("a2-yes", { pose: "thumbs" }); } else { await say("a2-no", { pose: "talk" }); $("b", q).textContent = `It's a ${it.show}.`; q.classList.add("glow"); await sentence(it.show); q.classList.remove("glow"); } await praise(); } });
+      return tries;
+    });
+  };
+  /* Show & Say: nhạc vui chạy, 3 thẻ úp nhún theo nhạc → nhạc dừng → bé chạm 1 thẻ → lật ra hình → bé nói "It's a …" */
+  T.showSay = async (task) => {
+    lock(true); await say(task.ask, { pose: "cheer" });
+    const pool = [...task.pool].sort(() => Math.random() - .5);
+    for (let r = 0; r < task.rounds; r++) {
+      field.innerHTML = "";
+      const ws = pool.slice(r * 3, r * 3 + 3);
+      const row = at(h(`<div class="fliprow">${ws.map(w => `<button class="card flipc" data-v="${w}"><span class="back">?</span><img src="${img(w)}" alt=""></button>`).join("")}</div>`), 50, 50);
+      const cs = $$(".flipc", row);
+      row.classList.add("dance"); await jingle(); row.classList.remove("dance");
+      setPose("listen"); if (QA) field.dataset.answer = ws[0];
+      lock(false);
+      const stopN = nudge({ replay: () => say(task.ask, { pose: "talk" }), blink: cs });
+      const c = await new Promise(res => cs.forEach(x => x.onclick = () => res(x))); stopN(); lock(true);
+      cs.forEach(x => x.onclick = null); c.classList.add("open"); sfx.pop(); burst(c, 8); await wait(500);
+      await word(c.dataset.v);
+      await speakTurn(c.dataset.v);
+      progress((r + 1) / task.rounds);
+    }
+    lock(false);
+  };
+  /* đoạn nhạc ngắn (~2,6 s) cho Show & Say — tổng hợp, không cần file */
+  async function jingle() {
+    if (QA || !ac) return wait(QA ? 20 : 2600);
+    const N = [523, 659, 784, 659, 587, 698, 880, 698, 523, 659, 784, 1047], t0 = ac.currentTime + .05;
+    N.forEach((f, i) => tone(f, t0 + i * .21, .2, "triangle", .35));
+    await wait(N.length * 210 + 150); sfx.pop();
+  }
 
   /* T4/T8 (17/11): lượt nói — bố cục cân giữa: hình (trên) → dòng gợi ý (chừa sẵn chỗ) → hàng 💡 · 🎤 · ⏭ đối xứng */
   async function speakTurn(w) {

@@ -7,3 +7,5 @@ Thay cho phoneme_*.m4a (spark-home-learning) + tên chữ Sparky đọc máy —
 17/11 (user: "các âm sao thấy bị cụt cụt"): D1 dùng đúng các file này (short-a/e/i/o = bản cũ user giữ 13/11, short-u = v3).
 Âm chỉ dài 0,13–0,18 s và có tiếng ngay từ mốc 0 → trình duyệt (thẻ <audio>) nuốt mất đầu âm. Bản web = bản gốc + 180 ms im đầu + 250 ms im đuôi
 (ffmpeg adelay/apad, KHÔNG cắt/giãn tiếng). Bản gốc nguyên byte: orig/. Web còn phát qua WebAudio (giải mã trước) để không mất đầu âm.
+
+23/11 (A2): name-p.mp3 ← model-p-511993.mp3 (B4 Letter B Day, docs/spark-unit-b-lesson4-20261010/audio/out/) — cùng bộ giọng tên chữ; + 180 ms im đầu + 250 ms im đuôi như các chữ khác. Bản gốc: orig/model-p-511993.mp3. CHƯA có âm /p/ (A3 mới dạy).

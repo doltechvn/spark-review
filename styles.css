@@ -309,3 +309,60 @@ dialog button{background:#f1e3cf;border-radius:10px;padding:6px 14px}
 .report .rstars{color:#f2b630;letter-spacing:.4cqw;font-size:5cqw}
 .report .rbtns{display:flex;gap:3cqw;margin-top:2cqh}
 .report .rbtns .go{flex:1;width:auto;margin:0;font-size:5.2cqw}
+/* ===== A2 (23/11): chữ mới, tô chữ, lưới tìm chữ, đọc từ, đúng/sai, Show & Say ===== */
+.tcard.newl .big span{transition:color .25s,scale .25s}
+.tcard.newl .big .glowl{color:var(--violet);scale:1.12}
+.tracepane{width:min(58cqw,36cqh);background:#fff;border-radius:5cqw;box-shadow:var(--shadow);padding:3cqw}
+.tsvg{display:block;width:100%;height:auto;touch-action:none;user-select:none}
+.tsvg .tl{stroke:#cfe1f2;stroke-width:.8}.tsvg .tl.mid{stroke-dasharray:2.5 2.5}.tsvg .tl.base{stroke:#9cc3e6;stroke-width:1.1}
+.tsvg .guide{fill:none;stroke:#ece3d6;stroke-width:9;stroke-linecap:round;stroke-dasharray:.1 5.2}
+.tsvg .guide.cur{stroke:#e3d2bb}
+.tsvg .done{fill:none;stroke:var(--violet);stroke-width:7.5;stroke-linecap:round;opacity:.9}
+.tsvg .done.demo{stroke:#f2a33c}.tsvg .done.ok{stroke:#3fb86b}
+.tsvg .ink polyline{fill:none;stroke:rgba(122,95,214,.55);stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+.tsvg .start circle{fill:#fff4dc;stroke:var(--sun);stroke-width:1.4}
+.tsvg .start text{font:800 6px "Baloo 2";text-anchor:middle;fill:var(--ink)}
+.tsvg .start.now circle{fill:var(--sun)}
+.tsvg .pen{fill:#f2a33c;opacity:0;stroke:#fff;stroke-width:1.2}
+.lgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:4cqw;background:#fff;border-radius:5cqw;box-shadow:var(--shadow);padding:4cqw}
+.lcell{width:min(16cqw,10cqh);aspect-ratio:1;border-radius:3cqw;background:#fffaf0;border:1cqw solid #a58cf0;font:800 min(11cqw,7cqh)/1 "Baloo 2";display:grid;place-items:center;padding-bottom:1.4cqw;transition:background .2s,border-color .2s}
+.lcell.right{background:#e7f8ee;border-color:var(--ok);color:#1f8a4c}
+.lcell.wrong{border-color:var(--no);background:#fdeceb}
+.wtext{display:inline-flex;gap:.08em;font-weight:800;line-height:1.05;white-space:nowrap}
+.wtext i{font-style:normal;padding:0 .04em;border-radius:.2em;transition:background .15s,color .15s}
+.wtext i:first-child{color:var(--orange)}
+.wtext i.lit{background:var(--sun);color:var(--ink)}
+.rword.whole .wtext i{color:var(--violet)}
+.card.rword{position:relative;width:min(34cqw,21cqh);padding:2cqw 2cqw 1.6cqw;display:flex;flex-direction:column;align-items:center;gap:1cqw}
+.card.rword img{width:78%;aspect-ratio:1;object-fit:contain}
+.card.rword .wtext{font-size:min(6.4cqw,4cqh)}
+.card.rword.solo{width:auto;min-width:46cqw;padding:3cqw 5cqw}
+.card.rword.solo .wtext.big{font-size:min(12cqw,7.4cqh)}
+.card.picb{width:min(30cqw,19cqh);height:min(30cqw,19cqh);padding:2.4cqw}
+.card.picb img{width:100%;height:100%;object-fit:contain}
+.card.lbpic{width:min(40cqw,25cqh);padding:3cqw 3cqw 2cqw;display:flex;flex-direction:column;align-items:center;gap:1cqw}
+.card.lbpic img{width:80%;aspect-ratio:1;object-fit:contain}
+.lslot{min-height:min(8cqw,5cqh);min-width:70%;border-bottom:.6cqw dashed #cdbda8;display:grid;place-items:center;font-size:min(6.4cqw,4cqh)}
+.lslot.on{border-bottom-color:transparent}
+.card.wbtn{padding:2.4cqw 4cqw;min-width:30cqw}
+.card.wbtn .wtext{font-size:min(7cqw,4.4cqh)}
+.tickrow{display:flex;gap:14cqw}
+.tickb{width:min(22cqw,13cqh);height:min(22cqw,13cqh);border-radius:50%;background:#fff;box-shadow:var(--shadow);font:800 min(13cqw,8cqh)/1 "Baloo 2";display:grid;place-items:center;border:1cqw solid #a58cf0}
+.tickb.yes{color:#2f9e5b}.tickb.no{color:#d0473c}
+.tickb.right{border-color:var(--ok);background:#e7f8ee}.tickb.wrong{border-color:var(--no);background:#fdeceb}
+.fliprow{display:flex;gap:6cqw}
+.card.flipc{position:relative;width:min(25cqw,16cqh);height:min(30cqw,19cqh);padding:2.4cqw;background:var(--violet);transition:background .3s,scale .2s}
+.card.flipc .back{font:800 min(13cqw,8cqh)/1 "Baloo 2";color:#fff}
+.card.flipc img{display:none;width:100%;height:100%;object-fit:contain}
+.card.flipc.open{background:#fff}.card.flipc.open .back{display:none}.card.flipc.open img{display:block}
+.fliprow.dance .flipc{animation:bop .42s ease-in-out infinite alternate}
+.fliprow.dance .flipc:nth-child(2){animation-delay:.14s}.fliprow.dance .flipc:nth-child(3){animation-delay:.28s}
+@keyframes bop{to{translate:0 -2.4cqh;rotate:6deg}}
+.card.lbpic img{width:min(30cqw,19cqh);height:min(30cqw,19cqh);max-width:none;max-height:none;object-fit:contain}
+.card.picb img{max-width:none;max-height:none}
+.card.lbpic,.card.rword{height:auto;display:flex}
+/* A2-1: thẻ đọc từ 1 hình + 1 chữ, to giữa màn; chạm từng phần chữ nghe âm */
+.card.rword.one{width:min(62cqw,38cqh);padding:4cqw 4cqw 3cqw;gap:2cqw;border-radius:6cqw}
+.card.rword.one img{width:82%}
+.card.rword.one .wtext{font-size:min(14cqw,8.6cqh)}
+.wtext i.tap{cursor:pointer}
