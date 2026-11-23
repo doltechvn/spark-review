@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sparky Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=33">
+</head>
+<body>
+  <div class="backdrop" id="backdrop"></div>
+  <div id="app">
+    <div class="bg" id="bgA"></div><div class="bg" id="bgB"></div>
+    <header class="hud" id="hud">
+      <button id="exit" class="hbtn" aria-label="Về bản đồ / trang chính">🏠</button>
+      <div class="bar"><i id="barFill"></i></div>
+      <button id="closet" class="hbtn" aria-label="Tủ đồ Sparky">👕</button>
+      <button id="aa" class="hbtn" aria-label="Hiện chữ">Aa</button>
+      <button id="music" class="hbtn" aria-label="Nhạc">♪</button>
+      <button id="parent" class="hbtn gear" aria-label="Phụ huynh: giữ 1 giây">⚙</button>
+    </header>
+    <main id="field"></main>
+    <div id="cap" class="cap"></div>
+    <div id="sparky" class="sparky"><img class="body" alt="Sparky"><img class="wear" alt=""></div>
+    <footer id="ctrl"></footer>
+  </div>
+
+  <dialog id="parentDlg">
+    <h3>Khu phụ huynh / GV</h3>
+    <div class="jumpbox"><select id="jump"></select><button id="jumpGo">Nhảy tới</button></div>
+    <form method="dialog"><button>Đóng</button></form>
+  </dialog>
+  <!-- bài nào: lesson.html?l=a1 → lessons/a1.js (trang chính index.html dẫn vào) -->
+  <script>
+    (function () {
+      var id = (new URLSearchParams(location.search).get("l") || "a1").toLowerCase().replace(/[^a-z0-9]/g, "");
+      ["lessons/_shared.js", "lessons/" + id + ".js", "app.js"].forEach(function (src) {
+        var e = document.createElement("script"); e.src = src + "?v=33"; e.async = false; document.body.appendChild(e);
+      });
+    })();
+  </script>
+</body>
+</html>

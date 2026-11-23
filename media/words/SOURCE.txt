@@ -1,0 +1,7 @@
+Từ vựng A1 — GIỌNG MẪU (model) đã khoá của Automation: voiceProfileId cmozd5ii0003su88ol5na88q5 (cùng giọng các bài B6/C/D1), một giọng cho cả 6 từ.
+  pen.mp3  ← docs/spark-unit-b-lesson6-20261018/audio/reuse/model-pen-31a841.mp3
+  bag.mp3  ← docs/spark-unit-b-lesson6-20261018/audio/out/model-bag-9b4e47.mp3
+  pencil/book/notebook/rubber.mp3 ← thu mới 17/11/2026 qua Audio Generator /api/voice-profiles/<id>/audition, master audio_render (vai model);
+  thô + sổ: images/_voice-raw/model/. Kiểm whisper: pen, pencil, book, notebook, bag, rubber — đúng cả 6.
+Web: +150 ms im đầu (không cắt/giãn). Thay speech_v2_00..05.wav (user 17/11: "chữ pencil đọc đang bị sai").
+Câu "It's a …" + "What is it?" vẫn là speech_v2 (lời khác, giọng khác — không trùng lời).

@@ -1,0 +1,9 @@
+Tên chữ + âm chữ: chép nguyên bản (không xử lý) từ Automation — bộ đã dùng ở D1 (13/11/2026) và C6:
+Lesson Production Automation/docs/spark-unit-d-lesson1-20261113/audio/reuse/
+  name-x.mp3  ← model-x-<hash>.mp3  (a 86f7e4 · e e0184a · i ca73ab · o 08a914 · u b2c7c0)
+  sound-x.mp3 ← short-x.mp3         (/æ/ /e/ /ɪ/ /ɒ/ /ʌ/)
+Thay cho phoneme_*.m4a (spark-home-learning) + tên chữ Sparky đọc máy — user 17/11: "các âm bị sai nhiều quá".
+
+17/11 (user: "các âm sao thấy bị cụt cụt"): D1 dùng đúng các file này (short-a/e/i/o = bản cũ user giữ 13/11, short-u = v3).
+Âm chỉ dài 0,13–0,18 s và có tiếng ngay từ mốc 0 → trình duyệt (thẻ <audio>) nuốt mất đầu âm. Bản web = bản gốc + 180 ms im đầu + 250 ms im đuôi
+(ffmpeg adelay/apad, KHÔNG cắt/giãn tiếng). Bản gốc nguyên byte: orig/. Web còn phát qua WebAudio (giải mã trước) để không mất đầu âm.

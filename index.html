@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sparky Review</title>
+<script>
+  /* link cũ (trước 20/11) mở thẳng bài A1: ?stage=N, ?qa → chuyển sang lesson.html?l=a1 */
+  (function () { var q = location.search; if (/[?&](stage|qa)\b/.test(q)) location.replace("lesson.html?l=a1&" + q.slice(1)); })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="home.css?v=31">
+</head>
+<body>
+  <div id="app">
+    <!-- TẦNG 1: kệ sách unit -->
+    <section class="scr" id="sHome">
+      <div class="top">
+        <div class="hello"><div class="spk" id="spk"><img class="body" src="media/sparky/wave.png" alt="Sparky"><img class="wear" alt=""></div><div class="bub">Hi! Let's learn!</div></div>
+        <div class="stars"><span>★</span><b id="totStars">0</b></div>
+        <button class="hbtn" id="closetBtn" aria-label="Sparky's closet">👕</button>
+      </div>
+      <div class="scroll">
+        <button class="cont" id="cont" hidden><span class="th"></span><span class="ct"><b>Continue</b><span id="contName"></span></span><span class="play">▶</span></button>
+        <div class="books" id="books"></div>
+      </div>
+    </section>
+
+    <!-- TẦNG 2: 6 bài của một unit -->
+    <section class="scr in" id="sUnit">
+      <div class="utop"><button class="back" id="back" aria-label="Back">←</button><div class="ut" id="uTitle"></div><div class="stars"><span>★</span><b id="uStars">0</b></div></div>
+      <div class="shelf" id="shelf"><div class="grid" id="grid"></div></div>
+    </section>
+
+    <!-- tủ đồ Sparky -->
+    <div class="closet" id="closet" hidden>
+      <div class="ctop"><b>Sparky's closet</b><button class="cx" id="closetX" aria-label="Close">✕</button></div>
+      <div class="cspk"><div class="spk big" id="spk2"><img class="body" src="media/sparky/cheer.png" alt="Sparky"><img class="wear" alt=""></div></div>
+      <div class="cgrid" id="cgrid"></div>
+    </div>
+  </div>
+  <script src="lessons/_shared.js?v=31"></script>
+  <script src="lessons/catalog.js?v=31"></script>
+  <script src="home.js?v=31"></script>
+</body>
+</html>
