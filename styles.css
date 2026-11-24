@@ -284,11 +284,11 @@ dialog button{background:#f1e3cf;border-radius:10px;padding:6px 14px}
 .closet .ctop{display:flex;align-items:center;justify-content:space-between}
 .closet .ctop b{font-size:7cqw}
 .closet .cx{width:11cqw;height:11cqw;border-radius:50%;background:#fff;box-shadow:var(--shadow);font-size:5cqw}
-.closet .cgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:3cqw}
-.closet .cell{aspect-ratio:1;border-radius:4cqw;background:#fff;box-shadow:var(--shadow);display:grid;place-items:center;padding:2cqw;border:.8cqw solid #eee3d2}
+.closet .cgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:2.4cqw}   /* 24/11: 18 ô = 6 × 3 */
+.closet .cell{aspect-ratio:1;border-radius:3cqw;background:#fff;box-shadow:var(--shadow);display:grid;place-items:center;padding:1.2cqw;border:.8cqw solid #eee3d2}
 .closet .cell img{width:100%;height:100%;object-fit:contain}
 .closet .cell.on{border-color:var(--violet);box-shadow:0 0 0 1cqw rgba(122,95,214,.3),var(--shadow)}
-.closet .cell.q{color:#d6c3a8;font-size:9cqw;font-weight:800;background:#fbf4ea;box-shadow:none;border-style:dashed}
+.closet .cell.q{color:#d6c3a8;font-size:5.4cqw;font-weight:800;background:#fbf4ea;box-shadow:none;border-style:dashed}
 .hud:not(.map) #closet{display:none}
 .card.lab.sm.opt{width:20cqw;height:24cqw}
 .card.lab.sm.opt b{font-size:3.5cqw}
@@ -366,3 +366,120 @@ dialog button{background:#f1e3cf;border-radius:10px;padding:6px 14px}
 .card.rword.one img{width:82%}
 .card.rword.one .wtext{font-size:min(14cqw,8.6cqh)}
 .wtext i.tap{cursor:pointer}
+/* ===== A3–A6 (24/11) ===== */
+.paddles{display:flex;gap:12cqw}
+.paddle{width:min(30cqw,19cqh);height:min(36cqw,23cqh);border-radius:50% 50% 12% 12%;background:#fff;box-shadow:var(--shadow);border:1cqw solid #a58cf0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1cqh}
+.paddle b{font:800 min(13cqw,8cqh)/1 "Baloo 2";color:var(--violet)}
+.paddle i{font-style:normal;font-size:min(6cqw,3.6cqh)}
+.paddle.right{border-color:var(--ok);background:#e7f8ee}.paddle.right b{font-size:min(9cqw,5.6cqh);color:#1f8a4c}
+.paddle.wrong{border-color:var(--no);background:#fdeceb}
+.abox.wrap5{flex-wrap:wrap;width:min(88cqw,56cqh);row-gap:4cqw}
+.card.bimg{width:min(36cqw,22cqh);height:min(36cqw,22cqh);padding:3cqw}
+.card.bimg img{width:100%;height:100%;object-fit:contain}
+.bslots{display:flex;gap:2.4cqw;background:#fff4d2;border:1.2cqw solid var(--sun);border-radius:4cqw;padding:2.4cqw 3cqw;box-shadow:var(--shadow)}
+.bslot{min-width:min(17cqw,10cqh);height:min(12cqw,7.4cqh);border-bottom:.7cqw dashed #cdbda8;display:grid;place-items:center;font:800 min(6.4cqw,4cqh)/1 "Baloo 2";padding:0 1.4cqw}
+.bslot.on{border-bottom-color:transparent;background:#fff;border-radius:2cqw}
+.bslots.done .bslot{background:#e7f8ee;color:#1f8a4c}
+.bslots.sp .bslot{min-width:min(13cqw,8cqh);font-size:min(10cqw,6.2cqh)}
+.bpool{display:flex;flex-wrap:wrap;justify-content:center;gap:4cqw;width:max-content;max-width:88cqw}
+.chunk,.tile{background:#fff;border:1cqw solid #a58cf0;border-radius:3cqw;box-shadow:var(--shadow);padding:1.6cqw 4cqw;font:800 min(6.4cqw,4cqh)/1.2 "Baloo 2"}
+.tile{width:min(17cqw,10.5cqh);height:min(17cqw,10.5cqh);padding:0 0 1.2cqw;font-size:min(10cqw,6.2cqh)}
+.chunk.used,.tile.used{display:none}
+.chunk.wrong,.tile.wrong{border-color:var(--no);background:#fdeceb}
+.posrow{display:flex;align-items:center;gap:4cqw;background:#fff;border-radius:5cqw;box-shadow:var(--shadow);padding:3cqw 4cqw}
+.pos{width:min(20cqw,12.5cqh);height:min(20cqw,12.5cqh);border-radius:3cqw;border:1cqw solid #a58cf0;background:#fffaf0;font:800 min(9cqw,5.6cqh)/1 "Baloo 2";color:transparent;padding-bottom:1cqw}
+.pos.right{color:#1f8a4c;border-color:var(--ok);background:#e7f8ee}.pos.wrong{border-color:var(--no);background:#fdeceb}
+.posmid{font:800 min(10cqw,6.2cqh)/1 "Baloo 2";color:var(--violet);background:#fff4dc;border:.8cqw solid var(--sun);border-radius:50%;width:min(15cqw,9.4cqh);height:min(15cqw,9.4cqh);display:grid;place-items:center;padding-bottom:1cqw}
+.wtext i.gap{color:var(--violet);border-bottom:.6cqw solid var(--violet);min-width:.5em;text-align:center}
+.qrow.spkq b{color:var(--orange-d)}
+.abox .card.key{width:min(21cqw,13cqh);height:min(21cqw,13cqh);font-size:min(13cqw,8cqh);padding-bottom:1.4cqw}
+/* Unit B (24/11): hình ló trong hộp (isIt/guess peek) + nút 👍/👎 */
+.qimg{transition:clip-path .7s ease}
+.qimg.peek{clip-path:circle(22% at var(--px,50%) var(--py,45%))}
+.qimg.gq{width:min(40cqw,19cqh);height:min(40cqw,19cqh)}
+.qbox:has(.qimg.peek){background:#fbe3b8}
+.abopt.yn .abl{font-size:9cqw}
+/* bóng thoại câu dài (B4 "It's not a balloon.") được xuống dòng thay vì tràn khung video */
+.bgrid > .bub{min-width:0;white-space:normal;text-align:center;line-height:1.15}
+/* gợi ý chờ lâu phóng thẻ 110 % (hintpulse) — chừa đệm để thẻ không vượt hàng chứa (qaLayout "tràn khung") */
+.tickrow,.paddles{padding:2cqw}
+/* B-4: số đếm ngược 3-2-1 (What's Missing) — chỉ số + tích tắc */
+.count3{width:min(26cqw,16cqh);height:min(26cqw,16cqh);border-radius:50%;background:#fff;border:1.4cqw solid var(--sun);box-shadow:var(--shadow);display:grid;place-items:center;font:800 min(16cqw,10cqh)/1 "Baloo 2";color:var(--orange-d,#c25e30);animation:pop3 .9s ease-out}
+@keyframes pop3{0%{scale:.4;opacity:0}20%{scale:1.1;opacity:1}80%{scale:1;opacity:1}100%{scale:.9;opacity:.2}}
+/* A36-1/2: chữ phụ âm đang học tô màu riêng + nhấp nháy theo âm */
+.tword{display:inline-flex;font-weight:800;line-height:1.05;white-space:nowrap;color:var(--ink)}
+.tword i{font-style:normal;transition:color .15s,scale .15s}
+.tword i.tgt{color:#e2574c}
+.tword i.tgt.blink{animation:tgtblink .32s ease-in-out 2 alternate}
+@keyframes tgtblink{from{scale:1}to{scale:1.28;color:#ff7a3d}}   /* A36-3: chỉ phóng to + đổi màu, không quầng sáng */
+.whole .tword i{color:var(--violet)}
+.whole .tword i.tgt{color:#e2574c}
+.card.rword.one .tword{font-size:min(14cqw,8.6cqh)}
+.paddle .tword{font-size:min(9cqw,5.6cqh)}
+.posrow:has(.posword){flex-direction:column;gap:2cqw}
+.posbox{display:flex;align-items:center;gap:4cqw}
+.posword{text-align:center}
+.posword .tword{font-size:min(14cqw,8.6cqh)}   /* A36-3: cỡ như thẻ đọc từ, không khung riêng */
+/* B-7 (24/11): kéo chữ giữa thả vào ô đầu / ô cuối */
+.posmid.dragme{position:relative;z-index:6;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;box-shadow:0 .6cqw 0 #e8c77a}
+.posmid.held{cursor:grabbing;scale:1.12;box-shadow:0 1.6cqw 2.4cqw rgba(0,0,0,.22)}
+.posmid.placed{visibility:hidden}
+.pos.near{border-color:var(--sun);background:#fff4dc;scale:1.06}
+.hand.drag{animation:none}
+
+/* ===== UNIT C (24/11): thẻ chữ số, vệt màu, hũ sơn, tô màu, dạy màu bằng đồ vật ===== */
+.card.ncard{width:min(21cqw,13cqh);height:min(21cqw,13cqh);font:800 min(13cqw,8cqh)/1 "Baloo 2";color:var(--violet-d);padding-bottom:.6cqh}
+.card.ncard.sm{width:min(16cqw,10cqh);height:min(16cqw,10cqh);font-size:min(10cqw,6.2cqh)}
+.card.ncard.age{width:min(17cqw,11cqh);height:min(20cqw,13cqh)}
+.abox:has(.ncard.age){gap:4cqw}
+.card.swc{width:min(24cqw,15cqh);height:min(18cqw,11cqh);padding:1.6cqw}
+.card.swc img{width:100%;height:100%;object-fit:contain}
+.card.swc.sm{width:min(19cqw,12cqh);height:min(14cqw,9cqh)}
+.abox.wrap5:has(.swc),.abox.wrap5:has(.ncard){width:min(80cqw,52cqh)}
+.qgrp{width:68cqw;height:min(30cqw,18cqh);object-fit:contain}
+.qbox:has(.qgrp){flex-direction:column;gap:1cqh;width:80cqw}
+.card.pic.big.wideimg{width:min(70cqw,44cqh);height:min(34cqw,22cqh);padding:2cqw}
+.card.pic.big.wideimg img{width:100%;height:100%;object-fit:contain}
+/* chip trong thẻ A/B: vệt màu hoặc chữ số (thay chữ A/B) */
+.abopt.cq{gap:1cqh}
+.abopt .chip-c{width:20cqw;height:14cqw;object-fit:contain}
+.abopt .chip-n{font:800 min(14cqw,8.6cqh)/1 "Baloo 2";color:var(--violet-d);height:14cqw;display:grid;place-items:center}
+/* Listen & Colour: hình nét → tô từ dưới lên */
+.pframe{position:relative;width:min(46cqw,28cqh);aspect-ratio:1}
+.pframe img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.pframe .pfill{clip-path:inset(100% 0 0 0);transition:clip-path .85s ease-out}
+.pframe.filled .pfill{clip-path:inset(0 0 0 0)}
+.card.pot{width:min(21cqw,13cqh);height:min(23cqw,14.4cqh);padding:1.6cqw}
+.card.pot img{width:100%;height:100%;object-fit:contain}
+.abox:has(.pot){gap:5cqw}
+/* dạy màu: 4 đồ vật quen (2 × 2) → vệt màu + tên màu */
+.cthings{display:grid;grid-template-columns:repeat(2,auto);gap:4cqw;padding:3cqw;border-radius:5cqw;background:rgba(255,255,255,.88);box-shadow:var(--shadow)}
+.cthings[data-n="3"]{grid-template-columns:repeat(3,auto)}
+.cthings[data-n="2"]{grid-template-columns:repeat(2,auto)}
+.cthing{width:min(24cqw,12.5cqh);height:min(24cqw,12.5cqh);padding:1.6cqw;box-shadow:none;background:#fff}
+.cthing img{width:100%;height:100%;object-fit:contain;transition:filter 1.1s ease}
+.cthings.grey .cthing img{filter:grayscale(1) brightness(1.05)}
+.card.cswatch{width:min(40cqw,21cqh);padding:2.4cqw 2.4cqw 1.6cqw;display:flex;flex-direction:column;align-items:center;gap:1cqw;border-radius:5cqw}
+.card.cswatch img{width:100%;aspect-ratio:3/2;object-fit:contain}
+.card.cswatch b{font-size:min(9cqw,5.6cqh);font-weight:800}
+.cback{display:flex;flex-wrap:wrap;justify-content:center;gap:4cqw 5cqw;width:min(86cqw,56cqh)}
+.cback .card.swc{width:min(24cqw,15cqh);height:min(18cqw,11cqh)}
+/* đọc câu → đúng/sai */
+.rtq{display:flex;flex-direction:column;align-items:center;gap:.4cqh}
+.rtq b{font-size:min(7.4cqw,4.6cqh);font-weight:800;line-height:1.15}
+.rtq .ra{color:var(--orange-d)}
+.rtq .ra.fixed{color:#1f8a4c}
+.qbox:has(.rtq) ~ .tickrow{padding:3cqw}
+/* nhóm khối gỗ 1–10 (cùng khổ 900×360): thẻ hình ngang để khối to bằng nhau ở mọi số */
+.card.picb:has(img[src*="media/c/n"]){width:min(40cqw,25cqh);height:min(19cqw,12cqh);padding:1.6cqw}
+.card.rword img[src*="media/c/n"]{aspect-ratio:5/2}
+/* C-1 (24/11 user): thẻ chữ nghe-chọn từ = khung vuông to, chữ to */
+.card.wbtn.sqw{width:min(34cqw,21cqh);height:min(34cqw,21cqh);min-width:0;padding:2cqw;display:grid;place-items:center}
+.card.wbtn.sqw .wtext{font-size:min(13cqw,8cqh)}
+/* C-2 (24/11 user): câu hỏi dài vẫn một dòng; câu đáp chỉ hiện khi bật Aa hoặc sau khi bé chọn đúng */
+.qrow b.qlong{font-size:min(6.2cqw,3.9cqh);white-space:nowrap}
+.abopt.said .abtx{display:block}
+/* A36-3: tím hay đen khi đọc cả từ — tuỳ bài (wordColor: "ink") ; chữ đích vẫn đỏ cam */
+.whole-ink .tword i{color:var(--ink)}
+.whole-ink .tword,.whole .tword{scale:1.08;transition:scale .15s}   /* đang đọc cả từ: phóng nhẹ, không đổi màu */
+.whole-ink .tword i.tgt{color:#e2574c}

@@ -115,6 +115,7 @@
     pop()  { if (!ac) return; const t = ac.currentTime; const o = ac.createOscillator(), g = ac.createGain(); o.frequency.setValueAtTime(600, t); o.frequency.exponentialRampToValueAtTime(1500, t + .08); g.gain.setValueAtTime(.4, t); g.gain.exponentialRampToValueAtTime(.001, t + .12); o.connect(g); g.connect(sfxGain); o.start(t); o.stop(t + .15); },
     tap()  { if (!ac) return; tone(660, ac.currentTime, .08, "triangle", .25); },
     whoosh() { if (!ac) return; const t = ac.currentTime; const o = ac.createOscillator(), g = ac.createGain(); o.type = "sawtooth"; o.frequency.setValueAtTime(900, t); o.frequency.exponentialRampToValueAtTime(200, t + .35); const f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 1200; g.gain.setValueAtTime(.12, t); g.gain.exponentialRampToValueAtTime(.001, t + .4); o.connect(f); f.connect(g); g.connect(sfxGain); o.start(t); o.stop(t + .45); },
+    tick(hi) { if (!ac) return; const t = ac.currentTime; tone(hi ? 1500 : 1100, t, .06, "square", .18); tone(hi ? 750 : 550, t, .09, "triangle", .25); },
     tada() { if (!ac) return; const t = ac.currentTime; [523, 659, 784, 1047].forEach((f, i) => tone(f, t + i * .09, .5, "triangle", .3)); }
   };
   function startBgm() {
@@ -233,11 +234,16 @@
     }
   }
   function shake(el) { el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake"); }
-  function hand(target) {
+  function hand(target, from = null) {
     const hd = h(`<div class="hand">👆</div>`); app.appendChild(hd);
-    const r = target.getBoundingClientRect(), a = app.getBoundingClientRect();
-    hd.style.left = (r.left - a.left + r.width / 2 - 18) + "px"; hd.style.top = (r.top - a.top + r.height * .55) + "px";
+    const a = app.getBoundingClientRect(), pt = el => { const r = el.getBoundingClientRect(); return [r.left - a.left + r.width / 2 - 18, r.top - a.top + r.height * .55]; };
+    const [x, y] = pt(target);
+    hd.style.left = x + "px"; hd.style.top = y + "px";
     target.classList.add("hint");
+    /* B-7 (24/11): bài kéo chữ — bàn tay vẽ đường kéo từ chữ (from) sang ô đúng, lặp lại */
+    if (from) { const [fx, fy] = pt(from); hd.classList.add("drag");
+      hd.animate([{ left: fx + "px", top: fy + "px", opacity: 0 }, { left: fx + "px", top: fy + "px", opacity: 1, offset: .15 },
+                  { left: x + "px", top: y + "px", opacity: 1, offset: .7 }, { left: x + "px", top: y + "px", opacity: 0 }], { duration: 1700, iterations: Infinity, easing: "ease-in-out" }); }
     return () => { hd.remove(); target.classList.remove("hint"); };
   }
   const PRAISE = ["fb-great", "fb-yay", "fb-super", "fb-wow"], RIGHT_POSE = ["thumbs", "cheer", "clap"];
@@ -245,27 +251,27 @@
   async function praise() { const p = RIGHT_POSE[praiseN % 3]; const id = PRAISE[praiseN % PRAISE.length]; praiseN++; sfx.ding(); await say(id, { pose: p }); }
 
   /* ======== bé chờ lâu không chọn (user 17/11): 7 s → đọc lại + nhấp nháy các ô; 14 s → bàn tay chỉ ô đúng; sau đó cứ 10 s đọc lại ======== */
-  function nudge({ replay, target = null, blink = [] }) {
+  function nudge({ replay, target = null, blink = [], from = null }) {
     if (QA) return () => {};
     let t1, t2, t3, unhand = null, alive = true;
     const flash = () => blink.forEach(b => { b.classList.remove("blink"); void b.offsetWidth; b.classList.add("blink"); });
     const busyNow = () => app.classList.contains("locked") || app.classList.contains("busy");
     const again = async () => { if (!alive || busyNow()) return; app.classList.add("busy"); flash(); if (replay) await replay(); app.classList.remove("busy"); if (alive) setPose("listen"); };
     t1 = setTimeout(again, 7000);
-    t2 = setTimeout(() => { if (!alive) return; if (target) unhand = hand(target); else flash(); again(); }, 14000);
+    t2 = setTimeout(() => { if (!alive) return; if (target) unhand = hand(target, from); else flash(); again(); }, 14000);
     t3 = setTimeout(function rep() { again(); t3 = setTimeout(rep, 10000); }, 24000);
     return () => { alive = false; clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); if (unhand) unhand(); blink.forEach(b => b.classList.remove("blink")); };
   }
 
   /* ======== một câu hỏi chọn đáp án: gợi ý 3 bậc (nghe lại → mờ 1 đáp án sai → bàn tay chỉ) ======== */
-  async function choose({ answer, buttons, prompt, skill, label, first, onRight, gate = null }) {
+  async function choose({ answer, buttons, prompt, skill, label, first, onRight, gate = null, dragFrom = null }) {
     const rec = { skill, item: label || answer, tries: 0 };
     if (QA) field.dataset.answer = answer;
     buttons.forEach(b => b.classList.add("opt"));   // W10: từng thẻ đáp án viền tím; G1: đúng = xanh lá, sai = đỏ
     let unhand = null;
-    if (first) unhand = hand(buttons.find(b => b.dataset.v === answer));
+    if (first) unhand = hand(buttons.find(b => b.dataset.v === answer), dragFrom);
     lock(false);
-    let stopNudge = nudge({ replay: prompt, target: buttons.find(b => b.dataset.v === answer), blink: buttons });
+    let stopNudge = nudge({ replay: prompt, target: buttons.find(b => b.dataset.v === answer), blink: buttons, from: dragFrom });
     await new Promise(resolve => {
       buttons.forEach(b => b.onclick = async (ev) => {
         if (app.classList.contains("locked") || b.classList.contains("faded")) return;
@@ -283,9 +289,9 @@
           const wrongs = buttons.filter(x => x.dataset.v !== answer && !x.classList.contains("faded"));
           if (rec.tries === 1) { await say("fb-tryagain", { pose: "oops" }); await prompt(); }
           else if (rec.tries === 2) { if (wrongs[0]) wrongs[0].classList.add("faded"); await say("fb-goodtry", { pose: "think" }); await prompt(); }
-          else { await say("fb-look", { pose: "talk" }); unhand = hand(buttons.find(x => x.dataset.v === answer)); }
+          else { await say("fb-look", { pose: "talk" }); unhand = hand(buttons.find(x => x.dataset.v === answer), dragFrom); }
           b.classList.remove("wrong"); setPose("listen"); lock(false);
-          stopNudge = nudge({ replay: prompt, target: buttons.find(x => x.dataset.v === answer), blink: buttons.filter(x => !x.classList.contains("faded")) });
+          stopNudge = nudge({ replay: prompt, target: buttons.find(x => x.dataset.v === answer), blink: buttons.filter(x => !x.classList.contains("faded")), from: dragFrom });
         }
       });
     });
@@ -388,8 +394,9 @@
       await wait(650);
       k++; progress(k / (task.letters.length + 1));
     }
-    // đọc thuộc: hết TÊN rồi hết ÂM
+    // đọc thuộc: hết TÊN rồi hết ÂM (chỉ khi dạy ≥ 2 chữ)
     field.innerHTML = "";
+    if (task.letters.length < 2) { progress(1); lock(false); return; }
     const n = task.letters.length;
     const row = task.letters.map((l, i) => at(h(`<div class="lcard sm chant reveal"><div class="big"><span>${l.toUpperCase()}</span><span>${l}</span></div></div>`), 50 + (i - (n - 1) / 2) * 18.5, 54));
     await say("ph-allnames", { pose: "cheer" });
@@ -403,7 +410,7 @@
     lock(true); await say(task.ask); await viHint(task);
     await runQueue(task.items, async (it, first) => {
       field.innerHTML = "";
-      const xs = [22, 50, 78];
+      const xs = { 2: [32, 68], 3: [22, 50, 78], 4: [16, 39, 61, 84] }[it.options.length] || [22, 50, 78];
       const btns = it.options.map((l, i) => at(h(`<button class="bubbleL" style="--d:${i * .45}s" data-v="${l}">${l}</button>`), xs[i], 57));
       const snd = it.by === "sound", hear = (rate) => snd ? letterSound(it.name, rate) : letterName(it.name, rate);
       const prompt = (rate) => hear(rate);
@@ -548,13 +555,20 @@
       const q = qbox(33);
       const tray = round.show.map(w => { const c = wcard(w, "sm", "div"); q.appendChild(c); return c; });
       lock(true);
-      for (const c of tray) { c.classList.add("glow"); await word(c.dataset.w); c.classList.remove("glow"); await wait(150); }
-      await wait(500);
+      /* B-4 (user 24/11): reads = đọc cả dãy mấy lần (mặc định 2); countdown = để thẻ nằm yên, CHỈ hiện số đếm ngược + tiếng tích tắc rồi mới che (mặc định 3) */
+      const reads = task.reads || 2;   /* user 24/11: MỌI bài What's Missing đọc 2 lần + đếm 3-2-1 (mặc định) */
+      for (let rr = 0; rr < reads; rr++) {
+        for (const c of tray) { c.classList.add("glow"); await word(c.dataset.w); c.classList.remove("glow"); await wait(150); }
+        await wait(rr < reads - 1 ? 700 : 500);
+      }
+      for (let n = task.countdown ?? 3; n >= 1; n--) {
+        const cd = at(h(`<div class="count3">${n}</div>`), 50, 62); sfx.tick(n % 2); await wait(950); cd.remove();
+      }
       const cloth = h(`<div class="cloth">🙈</div>`); q.appendChild(cloth); sfx.whoosh();
       await wait(1500);
       tray.find(c => c.dataset.w === round.hide).classList.add("gone");
       cloth.remove(); sfx.pop();
-      const others = Object.keys(L.words).filter(w => !round.show.includes(w)).sort(() => Math.random() - .5).slice(0, 2);
+      const others = (L.vocab || Object.keys(L.words)).filter(w => !round.show.includes(w)).sort(() => Math.random() - .5).slice(0, 2);
       const a = abox(64);
       const btns = [round.hide, ...others].sort().map(w => { const b = wcard(w); a.appendChild(b); return b; });
       const prompt = () => say("fb-missing", { pose: "think" });
@@ -648,10 +662,10 @@
     eye.classList.remove("glow"); progress(.4);
     // hình chữ: P to → p nhỏ
     const up = $(".up", card), lo = $(".lo", card);
-    await say("a2-big-small", { pose: "talk" }).then(() => {});
+    await say(task.bigSmall || "a2-big-small", { pose: "talk" });
     up.classList.add("glowl"); await wait(QA ? 20 : 500); up.classList.remove("glowl");
     lo.classList.add("glowl"); await wait(QA ? 20 : 500); lo.classList.remove("glowl");
-    await say("a2-hands", { pose: "clap" }); progress(.7);
+    await say(task.hands || "a2-hands", { pose: "clap" }); progress(.7);
     // bé tự chạm 👁️ kiểm tra
     await say("ph-tapeye", { pose: "talk" }); setPose("listen");
     const unhand = hand(eye);
@@ -668,7 +682,15 @@
      rồi bé dùng ngón tay tô — nét nào phủ ≥ 75 % điểm thì nét đó xanh, sang nét sau. Chờ lâu → Sparky tô mẫu lại nét đang làm. */
   const STROKES = {   // toạ độ khung 100 × 140: dòng đầu 15, giữa 57, chân 100, đuôi 135
     P: ["M32 15 L32 100", "M32 15 C 84 15, 84 57, 32 57"],
-    p: ["M34 57 L34 135", "M34 62 C 80 44, 82 104, 34 97"]
+    p: ["M34 57 L34 135", "M34 62 C 80 44, 82 104, 34 97"],
+    N: ["M24 100 L24 15", "M24 15 L76 100", "M76 100 L76 15"],
+    n: ["M30 57 L30 100", "M30 70 C 34 52, 72 50, 72 72 L72 100"],
+    /* Unit B (24/11): T = nét thẳng dài rồi nét ngang · t = nét thẳng rồi gạch ngang dòng giữa ·
+       B = thẳng xuống, bụng trên, bụng dưới · b = nét thẳng cao rồi bụng ở dưới */
+    T: ["M50 15 L50 100", "M20 15 L80 15"],
+    t: ["M46 30 L46 100", "M30 57 L64 57"],
+    B: ["M30 15 L30 100", "M30 15 C 76 15, 76 57, 30 57", "M30 57 C 84 57, 84 100, 30 100"],
+    b: ["M32 15 L32 100", "M32 64 C 78 46, 80 106, 32 96"]
   };
   T.trace = async (task) => {
     lock(true); await say(task.ask, { pose: "talk" });
@@ -684,7 +706,7 @@
           <circle class="pen" r="4.2"/></svg></div>`), 50, 45);
       const svg = $("svg", pane), guides = $$(".guide", svg), dones = $$(".done", svg), starts = $$(".start", svg), pen = $(".pen", svg), ink = $(".ink", svg);
       // số thứ tự nét đặt CẠNH điểm bắt đầu (nét 1 bên trái, nét 2 bên phải-trên) — 2 nét chung điểm đầu không che nhau
-      const OFF = [[-9, 1], [8, -7]];
+      const OFF = [[-9, 1], [8, -7], [9, 1]];
       guides.forEach((g, i) => { const p0 = g.getPointAtLength(0), o = OFF[i] || [0, 0]; starts[i].setAttribute("transform", `translate(${p0.x + o[0]},${p0.y + o[1]})`); });
       dones.forEach(d => { const len = d.getTotalLength(); d.style.strokeDasharray = len; d.style.strokeDashoffset = len; });
       const demo = async (i) => {   // bút mẫu chạy dọc nét i, vẽ dần màu
@@ -696,11 +718,11 @@
           pen.setAttribute("cx", pt.x); pen.setAttribute("cy", pt.y); d.style.strokeDashoffset = len * (1 - f); f < 1 ? setTimeout(step, 16) : res(); }; step(); });
         await wait(250); pen.style.opacity = 0; d.style.strokeDashoffset = len; d.classList.remove("demo");
       };
-      await say(L0 === "P" ? "a2-trace-big" : "a2-trace-small", { pose: "talk" });
+      await say((task.lines || { P: "a2-trace-big", p: "a2-trace-small" })[L0], { pose: "talk" });
       for (let i = 0; i < paths.length; i++) { starts[i].classList.add("now"); await demo(i); starts[i].classList.remove("now"); await wait(200); }
       await say("a2-your-turn", { pose: "talk" }); setPose("listen");
       // bé tô
-      const rec = { skill: task.skill, item: L0 === "P" ? "P to" : "p nhỏ", tries: 1 };
+      const rec = { skill: task.skill, item: L0 + (L0 === L0.toUpperCase() ? " to" : " nhỏ"), tries: 1 };
       for (let i = 0; i < paths.length; i++) {
         const g = guides[i], len = g.getTotalLength(), N = 36, pts = Array.from({ length: N }, (_, j) => g.getPointAtLength(len * j / (N - 1)));
         const hit = new Array(N).fill(false);
@@ -748,17 +770,17 @@
       stopN();
       if (c.dataset.v === t) {
         c.classList.add("right"); c.dataset.v = ""; burst(c, 6); sfx.ding(); found++; progress(found / need);
-        letterName(t);
+        letterName(t.toLowerCase());
         if (QA) setTimeout(() => field.dataset.answer = t, 0);   // qaAct xoá answer SAU khi bấm → đặt lại ở lượt sau
         if (found >= need) return res();
       } else {
-        rec.tries++; sfx.boop(); shake(c); c.classList.add("wrong"); lock(true); await say("a2-not-p", { pose: "oops" }); c.classList.remove("wrong"); setPose("listen"); lock(false);
+        rec.tries++; sfx.boop(); shake(c); c.classList.add("wrong"); lock(true); await say(task.wrongLine || "a2-not-p", { pose: "oops" }); c.classList.remove("wrong"); setPose("listen"); lock(false);
       }
       const left = cells.find(x => x.dataset.v === t);
       stopN = nudge({ replay: () => say(task.ask, { pose: "talk" }), target: left, blink: cells.filter(x => !x.classList.contains("right")) });
     }));
     stopN(); log.push(rec);
-    lock(true); await say("a2-found-all", { pose: "cheer" }); sfx.tada(); lock(false);
+    lock(true); await say(task.doneLine || "a2-found-all", { pose: "cheer" }); sfx.tada(); lock(false);
   };
 
   /* thẻ CHỮ — tách âm (break phonics). A2-1 (23/11): mỗi phần = [chữ, âm rời] → phần sáng nào phát âm đó (media/phonemes/) */
@@ -830,15 +852,18 @@
     lock(true); await say(task.ask);
     await runQueue(task.items, async (it, first) => {
       field.innerHTML = "";
-      const ok = it.show === it.say;
-      const q = qbox(30, `<img class="qimg" src="${img(it.show)}" alt=""><div class="qrow"><b>It's a ${it.say}.</b><button class="qspk always" aria-label="Nghe câu">🔊</button></div>`);
-      const a = at(h(`<div class="tickrow"><button class="tickb yes" data-v="yes" aria-label="Đúng">✓</button><button class="tickb no" data-v="no" aria-label="Sai">✗</button></div>`), 50, 60);
+      const neg = !!it.not, w = neg ? it.not : it.say, ok = neg ? it.show !== it.not : it.show === it.say;
+      const q = qbox(30, `<img class="qimg" src="${img(it.show)}" alt=""><div class="qrow"><b class="${task.hideText ? "abtx" : ""}">It's ${neg ? "not " : ""}a ${w}.</b>${task.read ? "" : `<button class="qspk always" aria-label="Nghe câu">🔊</button>`}</div>`);
+      const a = at(h(`<div class="tickrow"><button class="tickb yes" data-v="yes" aria-label="Đúng">${task.thumbs ? "👍" : "✓"}</button><button class="tickb no" data-v="no" aria-label="Sai">${task.thumbs ? "👎" : "✗"}</button></div>`), 50, 60);
       const btns = $$(".tickb", a);
-      const prompt = () => sentence(it.say);
-      $(".qspk", q).onclick = async () => { if (app.classList.contains("busy")) return; app.classList.add("busy"); q.classList.add("glow"); await prompt(); q.classList.remove("glow"); app.classList.remove("busy"); };
-      setPose("listen"); q.classList.add("glow"); await prompt(); q.classList.remove("glow");
-      const tries = await choose({ answer: ok ? "yes" : "no", buttons: btns, prompt, skill: task.skill, label: `${it.show}: "It's a ${it.say}"`, first,
-        onRight: async () => { if (ok) { await say("a2-yes", { pose: "thumbs" }); } else { await say("a2-no", { pose: "talk" }); $("b", q).textContent = `It's a ${it.show}.`; q.classList.add("glow"); await sentence(it.show); q.classList.remove("glow"); } await praise(); } });
+      const audio = neg ? (L.notAudio || {})[it.not] : L.words[it.say]?.sentence;
+      const prompt = task.read ? () => say("a5-read-it", { pose: "think" }) : () => play(audio);
+      if (!task.read) $(".qspk", q).onclick = async () => { if (app.classList.contains("busy")) return; app.classList.add("busy"); q.classList.add("glow"); await prompt(); q.classList.remove("glow"); app.classList.remove("busy"); };
+      setPose("listen"); if (!task.read) { q.classList.add("glow"); await prompt(); q.classList.remove("glow"); }
+      const tries = await choose({ answer: ok ? "yes" : "no", buttons: btns, prompt, skill: task.skill, label: `${it.show}: "It's ${neg ? "not " : ""}a ${w}"`, first,
+        onRight: async () => { if (task.read) { q.classList.add("glow"); await play(audio); q.classList.remove("glow"); }
+          $("b", q).classList.remove("abtx");
+          if (ok) { await say("a2-yes", { pose: "thumbs" }); } else { await say("a2-no", { pose: "talk" }); $("b", q).textContent = `It's a ${it.show}.`; q.classList.add("glow"); await sentence(it.show); q.classList.remove("glow"); } await praise(); } });
       return tries;
     });
   };
@@ -871,6 +896,284 @@
     await wait(N.length * 210 + 150); sfx.pop();
   }
 
+
+  /* ================= A3–A6 (24/11) ================= */
+  /* A36-1/2 (24/11, LUẬT mọi unit): chữ phụ âm đang học — CHỈ chữ ở vị trí đang dạy (đầu / cuối) tô màu riêng,
+     nhấp nháy theo từng lần phát âm rời, rồi mới sáng + đọc cả từ. Chữ khác giữ màu thường. */
+  const tword = (w, idx, cls = "") => `<span class="tword ${cls}">${w.split("").map((c, i) => `<i class="${i === idx ? "tgt" : ""}">${c}</i>`).join("")}</span>`;
+  async function soundBlink(el, letter, times = 2) {
+    const t = $$(".tgt", el);
+    for (let r = 0; r < times; r++) { t.forEach(x => x.classList.add("blink")); await letterSound(letter); t.forEach(x => x.classList.remove("blink")); await wait(QA ? 5 : 220); }
+  }
+  async function wholeWord(el, w) { const c = L.wordColor === "violet" ? "whole" : "whole-ink"; /* 24/11 user: mặc định chữ ĐEN (chữ đích vẫn đỏ cam); "violet" = tím */ el.classList.add(c); await word(w); await wait(150); el.classList.remove(c); }
+  /* âm + từ ví dụ: /p/ /p/ pot — hình to, chữ dưới; bé nói theo */
+  T.soundExamples = async (task) => {
+    lock(true); await say(task.ask, { pose: "talk" });
+    let k = 0;
+    for (const w of task.words) {
+      field.innerHTML = "";
+      const c = at(h(`<div class="card rword one" data-w="${w}"><img src="${img(w)}" alt="">${tword(w, 0)}</div>`), 50, 46);
+      sfx.pop(); await wait(250); c.classList.add("glow");
+      for (let r = 0; r < 2; r++) { await soundBlink(c, task.letter); await wait(150); await wholeWord(c, w); await wait(450); }
+      c.classList.remove("glow"); setPose("listen"); await echo(c);
+      k++; progress(k / task.words.length);
+    }
+    await praise(); lock(false);
+  };
+  /* TÊN hay ÂM? nghe → chạm 👁️ (tên) hoặc 👂 (âm) */
+  T.nameOrSound = async (task) => {
+    lock(true); await say(task.ask, { pose: "talk" });
+    await runQueue(task.items, async (it, first) => {
+      field.innerHTML = "";
+      const card = at(h(`<div class="tcard"><div class="big"><span>${it.l.toUpperCase()}</span><span>${it.l}</span></div>
+        <div class="lb"><button class="eye" data-v="name" aria-label="Tên chữ">👁️</button><button class="ear" data-v="sound" aria-label="Âm">👂</button></div></div>`), 50, 50);
+      const btns = $$(".lb button", card);
+      const prompt = (rate) => it.by === "sound" ? letterSound(it.l, rate) : letterName(it.l, rate);
+      const L1 = listen(prompt); lock(true); await L1.play();
+      const tries = await choose({ answer: it.by === "sound" ? "sound" : "name", buttons: btns, prompt, skill: task.skill, label: (it.by === "sound" ? "âm /" : "tên ") + it.l + (it.by === "sound" ? "/" : ""), first,
+        onRight: async () => { sfx.ding(); await say(it.by === "sound" ? "ph-sound" : "ph-name", { pose: "talk" }); await prompt(); await praise(); } });
+      L1.remove(); return tries;
+    });
+  };
+  /* Listen for /p/: 2 mái chèo 1 · 2 — nghe 2 từ, chạm từ bắt đầu bằng âm đó */
+  T.listenFor = async (task) => {
+    lock(true); await say(task.ask, { pose: "talk" });
+    await runQueue(task.items, async (it, first) => {
+      field.innerHTML = "";
+      const row = at(h(`<div class="paddles">${it.w.map((w, i) => `<button class="paddle" data-v="${i}"><b>${i + 1}</b><i>🔊</i></button>`).join("")}</div>`), 50, 52);
+      const btns = $$(".paddle", row);
+      const prompt = async () => { for (let i = 0; i < 2; i++) { btns[i].classList.add("glow"); await word(it.w[i]); btns[i].classList.remove("glow"); await wait(350); } };
+      const L1 = listen(prompt); lock(true); await L1.play();
+      const tries = await choose({ answer: String(it.ans), buttons: btns, prompt, skill: task.skill, label: it.w.join(" / "), first,
+        onRight: async (b) => { sfx.ding(); const W = it.w[it.ans]; b.querySelector("b").innerHTML = tword(W, 0); await soundBlink(b, task.letter); await wholeWord(b, W); await praise(); } });
+      L1.remove(); return tries;
+    });
+  };
+  /* nghe từ → chạm hình (Slap the board) */
+  T.listenPick = async (task) => {
+    lock(true); await say(task.ask);
+    await runQueue(task.items, async (it, first) => {
+      field.innerHTML = "";
+      const a = abox(56);
+      const btns = it.options.map(w => { const b = wcard(w, it.options.length > 3 ? "sm" : "big"); a.appendChild(b); return b; });
+      if (it.options.length > 3) a.classList.add("wrap5");
+      const prompt = (rate) => word(it.w, rate);
+      const L1 = listen(prompt); lock(true); await L1.play();
+      const tries = await choose({ answer: it.w, buttons: btns, prompt, skill: task.skill, label: it.w, first,
+        onRight: async () => { sfx.ding(); await word(it.w); await praise(); } });
+      L1.remove(); return tries;
+    });
+  };
+  /* XẾP CÂU từ mảnh: hình trên, ô trống giữa, mảnh xáo dưới — chạm đúng thứ tự; xong → nghe cả câu */
+  T.build = async (task) => {
+    lock(true); await say(task.ask, { pose: "talk" });
+    let k = 0;
+    for (const it of task.items) {
+      field.innerHTML = "";
+      at(h(`<div class="card pic big bimg"><img src="${img(it.show)}" alt=""></div>`), 50, 27);
+      const slots = at(h(`<div class="bslots">${it.chunks.map(() => `<span class="bslot"></span>`).join("")}</div>`), 50, 47);
+      const order = it.chunks.map((c, i) => i).sort(() => Math.random() - .5);
+      if (order.every((v, i) => v === i)) order.reverse();
+      const pool = at(h(`<div class="bpool">${order.map(i => `<button class="chunk" data-i="${i}" data-v="${i}">${it.chunks[i]}</button>`).join("")}</div>`), 50, 63);
+      const rec = { skill: task.skill, item: it.chunks.join(" "), tries: 1 };
+      let next = 0; setPose("listen");
+      if (QA) field.dataset.answer = "0";
+      lock(false);
+      let stopN = nudge({ replay: () => say(task.ask, { pose: "talk" }), target: $(`.chunk[data-i="0"]`, pool), blink: $$(".chunk", pool) });
+      await new Promise(res => $$(".chunk", pool).forEach(b => b.onclick = async () => {
+        if (app.classList.contains("locked") || b.classList.contains("used")) return;
+        stopN();
+        if (+b.dataset.i === next) {
+          b.classList.add("used"); b.dataset.v = "x"; const sl = $$(".bslot", slots)[next]; sl.textContent = it.chunks[next]; sl.classList.add("on"); sfx.tap(); next++;
+          if (QA) setTimeout(() => field.dataset.answer = String(next), 0);
+          if (next >= it.chunks.length) return res();
+        } else { rec.tries++; sfx.boop(); shake(b); b.classList.add("wrong"); await wait(400); b.classList.remove("wrong"); }
+        stopN = nudge({ replay: () => say(task.ask, { pose: "talk" }), target: $(`.chunk[data-i="${next}"]`, pool), blink: $$(".chunk:not(.used)", pool) });
+      }));
+      stopN(); log.push(rec); lock(true);
+      slots.classList.add("done"); burst(slots, 10); sfx.ding(); await play(it.audio); await praise();
+      k++; progress(k / task.items.length);
+    }
+    lock(false);
+  };
+  /* HELP SPARKY: Sparky gọi tên đồ vật (đúng hoặc sai) → bé 👍 / 👎; sai thì nghe câu sửa "It's not a desk. It's a chair." */
+  T.help = async (task) => {
+    lock(true); await say(task.ask, { pose: "talk" });
+    await runQueue(task.items, async (it, first) => {
+      field.innerHTML = "";
+      const ok = it.show === it.say;
+      const q = qbox(30, `<img class="qimg" src="${img(it.show)}" alt=""><div class="qrow spkq"><b class="${task.hideText ? "abtx" : ""}">It's a ${it.say}!</b><button class="qspk always" aria-label="Nghe">🔊</button></div>`);
+      const a = at(h(`<div class="tickrow"><button class="tickb yes" data-v="yes" aria-label="Đúng">👍</button><button class="tickb no" data-v="no" aria-label="Sai">👎</button></div>`), 50, 60);
+      const btns = $$(".tickb", a);
+      const prompt = () => say("sp-say-" + it.say.replace(/ /g, "-"), { pose: "talk", after: "listen" });   // Sparky tự nói (giọng Sparky)
+      $(".qspk", q).onclick = async () => { if (app.classList.contains("busy")) return; app.classList.add("busy"); q.classList.add("glow"); await prompt(); q.classList.remove("glow"); app.classList.remove("busy"); };
+      q.classList.add("glow"); await prompt(); q.classList.remove("glow");
+      const tries = await choose({ answer: ok ? "yes" : "no", buttons: btns, prompt, skill: task.skill, label: `${it.show}: Sparky "${it.say}"`, first,
+        onRight: async () => {
+          if (ok) { $("b", q).classList.remove("abtx"); await say("a2-yes", { pose: "thumbs" }); }
+          else { $("b", q).textContent = it.full ? `It's not a ${it.say}. It's a ${it.show}.` : `It's not a ${it.say}.`; $("b", q).classList.remove("abtx"); q.classList.add("glow"); await play(it.fix); q.classList.remove("glow"); await say("fb-thanks", { pose: "clap" }); }
+          await praise(); } });
+      return tries;
+    });
+  };
+  /* ĐÁNH VẦN bằng TÊN chữ: nghe từ → chạm ô chữ đúng thứ tự (mỗi chạm đọc tên chữ) → đọc cả từ */
+  T.spell = async (task) => {
+    lock(true); await say(task.ask, { pose: "talk" });
+    let k = 0;
+    for (const it of task.items) {
+      field.innerHTML = "";
+      const letters = it.w.split(""), extra = (it.extra || []);
+      const slots = at(h(`<div class="bslots sp">${letters.map(() => `<span class="bslot"></span>`).join("")}</div>`), 50, 40);
+      const tiles = [...letters.map((l, i) => ({ l, i })), ...extra.map(l => ({ l, i: -1 }))].sort(() => Math.random() - .5);
+      const pool = at(h(`<div class="bpool tiles">${tiles.map((t, j) => `<button class="tile" data-l="${t.l}" data-v="${t.l}">${t.l}</button>`).join("")}</div>`), 50, 60);
+      const prompt = (rate) => word(it.w, rate);
+      const L1 = listen(prompt); lock(true); await L1.play();
+      const rec = { skill: task.skill, item: it.w, tries: 1 }; let next = 0;
+      if (QA) field.dataset.answer = letters[0];
+      lock(false);
+      let stopN = nudge({ replay: prompt, target: $(`.tile[data-l="${letters[0]}"]`, pool), blink: $$(".tile", pool) });
+      await new Promise(res => $$(".tile", pool).forEach(b => b.onclick = async () => {
+        if (app.classList.contains("locked") || b.classList.contains("used")) return;
+        stopN();
+        if (b.dataset.l === letters[next]) {
+          b.classList.add("used"); b.dataset.v = "x"; const sl = $$(".bslot", slots)[next]; sl.textContent = letters[next]; sl.classList.add("on"); next++;
+          lock(true); await letterName(b.dataset.l); lock(false);
+          if (QA) setTimeout(() => field.dataset.answer = letters[next] || "", 0);
+          if (next >= letters.length) return res();
+        } else { rec.tries++; sfx.boop(); shake(b); b.classList.add("wrong"); await wait(400); b.classList.remove("wrong"); }
+        stopN = nudge({ replay: prompt, target: $(`.tile:not(.used)[data-l="${letters[next]}"]`, pool), blink: $$(".tile:not(.used)", pool) });
+      }));
+      stopN(); log.push(rec); L1.remove(); lock(true);
+      slots.classList.add("done"); burst(slots, 10); sfx.ding();
+      for (const l of letters) await letterName(l);   // P – E – N
+      await wait(200); await word(it.w); await praise();
+      k++; progress(k / task.items.length);
+    }
+    lock(false);
+  };
+  /* B-7: thẻ `el` kéo được (chuột + ngón tay); thả gần ô nào trong `boxes` = bấm ô đó (đi qua choose: đúng/sai/gợi ý như cũ).
+     Thả ra ngoài → trượt về chỗ cũ, không tính sai. */
+  function dragInto(el, boxes) {
+    let d = null;
+    el.classList.add("dragme");
+    const over = () => { const m = el.getBoundingClientRect(), cx = m.left + m.width / 2, cy = m.top + m.height / 2; let best = null, bd = Infinity;
+      for (const b of boxes) { if (b.classList.contains("faded") || b.classList.contains("right")) continue;
+        const r = b.getBoundingClientRect(), dist = Math.hypot(cx - (r.left + r.width / 2), cy - (r.top + r.height / 2));
+        if (dist < r.width * .85 && dist < bd) { bd = dist; best = b; } }
+      return best; };
+    const back = () => { el.style.transition = "translate .25s ease-out"; el.style.translate = "0 0"; setTimeout(() => { el.style.transition = ""; }, 270); };
+    el.onpointerdown = (ev) => { if (app.classList.contains("locked") || el.classList.contains("placed")) return; ev.preventDefault();
+      d = { x: ev.clientX, y: ev.clientY }; try { el.setPointerCapture(ev.pointerId); } catch (e) {} el.style.transition = ""; el.classList.add("held"); };
+    el.onpointermove = (ev) => { if (!d) return; el.style.translate = `${ev.clientX - d.x}px ${ev.clientY - d.y}px`; const t = over(); boxes.forEach(b => b.classList.toggle("near", b === t)); };
+    el.onpointerup = el.onpointercancel = (ev) => { if (!d) return; const t = ev.type === "pointerup" ? over() : null; d = null;
+      el.classList.remove("held"); boxes.forEach(b => b.classList.remove("near")); back(); if (t) t.click(); };
+  }
+  /* ÂM ĐẦU hay ÂM CUỐI: nghe từ → kéo chữ giữa vào (hoặc chạm) ô đầu (▶ start) hay ô cuối (end ◀) */
+  T.position = async (task) => {
+    lock(true); await say(task.ask, { pose: "talk" });
+    await runQueue(task.items, async (it, first) => {
+      field.innerHTML = "";
+      if (L.words[it.w]?.img) at(h(`<div class="card pic big bimg"><img src="${img(it.w)}" alt=""></div>`), 50, 30.5);
+      const row = at(h(`<div class="posrow"><div class="posbox"><button class="pos" data-v="start">${it.sound}</button><span class="posmid">${it.sound}</span><button class="pos" data-v="end">${it.sound}</button></div></div>`), 50, L.words[it.w]?.img ? 59.5 : 50);
+      const btns = $$(".pos", row), mid = $(".posmid", row);
+      dragInto(mid, btns);   // B-7 (user 24/11): kéo chữ giữa thả vào ô đầu / ô cuối (vẫn chạm ô được)
+      const prompt = async (rate) => { await letterSound(it.sound, rate); await wait(250); await word(it.w, rate); };
+      const L1 = listen(prompt); lock(true); await L1.play();
+      const tries = await choose({ answer: it.at, buttons: btns, prompt, skill: task.skill, label: `${it.w}: /${it.sound}/ ${it.at === "start" ? "đầu" : "cuối"}`, first, dragFrom: mid,
+        onRight: async () => { sfx.ding(); mid.classList.add("placed");
+          const idx = it.at === "start" ? it.w.indexOf(it.sound) : it.w.lastIndexOf(it.sound);
+          // A36-3: không thêm khung riêng — chữ hiện ngay trong tấm trắng đang chứa 2 ô, cỡ chữ như thẻ đọc từ
+          const tw = h(`<div class="posword">${tword(it.w, idx)}</div>`); row.prepend(tw);
+          await soundBlink(tw, it.sound); await wholeWord(tw, it.w); await praise(); } });
+      L1.remove(); return tries;
+    });
+  };
+  /* ĐIỀN CHỮ THIẾU: nghe từ → _en → chọn p hay n */
+  T.complete = async (task) => {
+    lock(true); await say(task.ask, { pose: "talk" });
+    await runQueue(task.items, async (it, first) => {
+      field.innerHTML = "";
+      const show = it.w.split("").map((c, i) => i === it.at ? `<i class="gap">_</i>` : `<i>${c}</i>`).join("");
+      const q = qbox(32, `<div class="card rword solo"><span class="wtext big">${show}</span></div>`);
+      const a = abox(58);
+      const btns = it.options.map(l => { const b = h(`<button class="card key" data-v="${l}">${l}</button>`); a.appendChild(b); return b; });
+      const prompt = (rate) => word(it.w, rate);
+      const L1 = listen(prompt); lock(true); await L1.play();
+      const tries = await choose({ answer: it.w[it.at], buttons: btns, prompt, skill: task.skill, label: it.w, first,
+        onRight: async () => { sfx.ding(); const g = $(".gap", q); g.textContent = it.w[it.at]; g.classList.add("lit"); await word(it.w); await praise(); } });
+      L1.remove(); return tries;
+    });
+  };
+
+  /* ================= Unit B (24/11) ================= */
+  const lid = (w) => w.replace(/ /g, "-");
+  const peekCss = (it) => it.peek ? ` peek" style="--px:${(it.peek[0] ?? 50)}%;--py:${(it.peek[1] ?? 45)}%` : "";
+  /* IS IT A …? Sparky hỏi (giọng Sparky, lời sp-is-<từ>) → bé chọn 👍 "Yes, it is." / 👎 "No, it isn't." (chữ đáp án theo nút Aa).
+     Chọn xong: câu trả lời mẫu phát bằng giọng app homework (KHÔNG giọng Sparky — lời của bé) → 🗣️ bé nói theo.
+     read: true (B2/B6) = câu hỏi hiện chữ, KHÔNG đọc trước — bé tự đọc; trả lời xong mới nghe. Câu hỏi không read: chữ ẩn (chỉ hiện khi bật Aa).
+     peek: [x, y] = hình chỉ ló một vòng nhỏ (đồ chơi trong hộp), trả lời xong mới hiện hết. */
+  T.isIt = async (task) => {
+    lock(true); await say(task.ask, { pose: "talk" });
+    let k = 0;
+    await runQueue(task.items, async (it, first) => {
+      field.innerHTML = "";
+      const ok = it.show === it.q;
+      const q = qbox(26, `<img class="qimg${peekCss(it)}" src="${img(it.show)}" alt=""><div class="qrow spkq"><b class="${task.read ? "" : "abtx"}">Is it a ${it.q}?</b>${task.read ? "" : `<button class="qspk always" aria-label="Nghe câu hỏi">🔊</button>`}</div>`);
+      const a = abox(60);
+      const btns = [["yes", "👍", "Yes, it is."], ["no", "👎", "No, it isn't."]].map(([v, ic, tx], i) => {
+        const col = h(`<div class="abcol"><button class="abopt yn ${i ? "b" : "a"}" data-v="${v}"><span class="abl">${ic}</span><span class="abtx">${tx}</span></button></div>`);
+        a.appendChild(col); return $(".abopt", col);
+      });
+      const ask = () => say("sp-is-" + lid(it.q), { pose: "think", after: "listen" });
+      const answer = (v) => play(L.yesNo[v]);
+      const prompt = task.read ? () => say(task.readLine || "b-read-q", { pose: "think", after: "listen" }) : ask;
+      if (!task.read) $(".qspk", q).onclick = async () => { if (app.classList.contains("busy")) return; app.classList.add("busy"); q.classList.add("glow"); await ask(); q.classList.remove("glow"); app.classList.remove("busy"); };
+      lock(true);
+      if (!task.read) { q.classList.add("glow"); await ask(); q.classList.remove("glow"); }
+      if (k < 2 && !task.read) for (const b of btns) { b.classList.add("glow"); await answer(b.dataset.v); b.classList.remove("glow"); await wait(250); }
+      k++; setPose("listen");
+      const tries = await choose({ answer: ok ? "yes" : "no", buttons: btns, prompt, skill: task.skill, label: `${it.show}: "Is it a ${it.q}?"`, first,
+        onRight: async (b) => {
+          sfx.ding();
+          if (task.read) { q.classList.add("glow"); await ask(); q.classList.remove("glow"); }
+          $(".qimg", q).classList.remove("peek"); $(".qrow b", q).classList.remove("abtx"); await wait(it.peek ? 500 : 100);
+          b.classList.add("glow"); await answer(ok ? "yes" : "no"); setPose("listen"); await echo(b); b.classList.remove("glow");
+          await praise(); } });
+      return tries;
+    });
+  };
+  /* ĐOÁN ĐỒ CHƠI TRONG HỘP (What's in Sparky's Box? / Mystery Toy): hình chỉ ló một góc; bé chạm 1 trong 3 thẻ = HỎI
+     "Is it a kite?" (câu mẫu giọng app homework) → 🗣️ bé nói theo → Sparky đáp "No, it isn't." (thẻ đỏ rồi mờ) hoặc "Yes, it is!" (hiện hết hình). */
+  T.guess = async (task) => {
+    lock(true); await say(task.ask, { pose: "talk" });
+    let r = 0;
+    for (const it of task.items) {
+      field.innerHTML = "";
+      const q = qbox(28, `<img class="qimg gq${peekCss({ peek: it.peek || [50, 45] })}" src="${img(it.show)}" alt=""><div class="qrow"><b>?</b></div>`);
+      const a = abox(61);
+      const btns = it.options.map(w => { const b = wcard(w, "big"); a.appendChild(b); return b; });
+      btns.forEach(b => b.classList.add("opt"));
+      const rec = { skill: task.skill, item: it.show, tries: 0 };
+      const prompt = () => say(task.again || "b-guess-again", { pose: "think", after: "listen" });
+      setPose("listen"); lock(false);
+      for (;;) {
+        if (QA) field.dataset.answer = it.show;
+        const stopN = nudge({ replay: prompt, target: btns.find(b => b.dataset.v === it.show), blink: btns.filter(b => !b.classList.contains("faded")) });
+        const b = await new Promise(res => btns.forEach(x => x.onclick = () => { if (!app.classList.contains("locked") && !x.classList.contains("faded")) res(x); }));
+        stopN(); lock(true); rec.tries++;
+        b.classList.add("glow"); await play(L.isAudio[b.dataset.v]); setPose("listen"); await echo(b); b.classList.remove("glow");
+        if (b.dataset.v === it.show) {
+          b.classList.add("right"); sfx.ding(); $(".qimg", q).classList.remove("peek"); $(".qrow b", q).textContent = it.show; burst(q, 10);
+          await say("sp-yes", { pose: "cheer" }); await word(it.show); await praise(); break;
+        }
+        b.classList.add("wrong"); sfx.boop(); shake(b); await say("sp-no", { pose: "talk" }); b.classList.remove("wrong"); b.classList.add("faded");
+        setPose("listen"); lock(false);
+      }
+      log.push(rec); r++; progress(r / task.items.length);
+      await wait(300);
+    }
+  };
+
   /* T4/T8 (17/11): lượt nói — bố cục cân giữa: hình (trên) → dòng gợi ý (chừa sẵn chỗ) → hàng 💡 · 🎤 · ⏭ đối xứng */
   async function speakTurn(w) {
     field.innerHTML = "";
@@ -901,6 +1204,244 @@
     });
   }
 
+  /* ================= UNIT C (24/11) — số đếm, màu, hỏi–đáp "How many?" / "What colour is it?" =================
+     Dữ liệu: window.UNIT_C (_shared.js) → L.words có số "1".."10" (hình khối, tiếng one…ten), chữ số one…ten, 10 màu (vệt màu + tiếng),
+     L.howMany / L.whatColour (câu hỏi giọng mẫu), L.words[màu].its ("It's red." giọng mẫu). Không đổi loại bài cũ. */
+  Object.assign(STROKES, {   // R: thẳng xuống → bụng trên → chân chéo ra · r: nét ngắn → vai · D: thẳng → một bụng to · d: bụng tròn → nét cao bên phải
+    R: ["M30 15 L30 100", "M30 15 C 84 15, 84 57, 30 57", "M46 57 L78 100"],
+    r: ["M34 57 L34 100", "M34 74 C 40 56, 60 52, 72 60"],
+    D: ["M28 15 L28 100", "M28 15 C 94 15, 94 100, 28 100"],
+    d: ["M68 66 C 60 52, 30 54, 30 79 C 30 104, 60 104, 68 92", "M68 15 L68 100"]
+  });
+  /* C-4 (24/11, user chọn "vẽ đội sẵn"): món có it.eye = lớp mũ tách từ ảnh máy vẽ Sparky ĐANG ĐỘI (tools/wear_fit/worn.py) —
+     đặt theo khung MẮT của từng tư thế (WR.EYES: tâm mắt, khoảng cách mắt, góc nghiêng) + xoay theo độ nghiêng đầu quanh đáy mũ.
+     Món cũ (không có it.eye) giữ nguyên cách đặt theo HEAD. Thẻ quà + tủ đồ vẫn dùng hình phẳng it.img. */
+  const _placeWearHead = placeWear;
+  placeWear = function (id = wardrobe.wearing) {
+    const it = WR.ITEMS[id], E = WR.EYES || {}, e = E[pose] || E.idle;
+    if (!it || !it.eye || !it.worn || !e) { wearEl.style.rotate = ""; wearEl.style.transformOrigin = ""; return _placeWearHead(id); }
+    const q = it.eye, t = e.r * Math.PI / 180, c = Math.cos(t), s = Math.sin(t), vx = q.ox * c - q.oy * s, vy = q.ox * s + q.oy * c;
+    if (!wearEl.src.endsWith(it.worn)) wearEl.src = it.worn;
+    wearEl.classList.add("on");
+    wearEl.style.left = (e.mx + vx * e.d) + "%"; wearEl.style.top = (e.my + vy * e.d * e.a) + "%"; wearEl.style.width = (q.w * e.d) + "%";
+    wearEl.style.transformOrigin = "50% 100%"; wearEl.style.rotate = (e.r - (q.rb || 0)) + "deg";
+  };
+  placeWear();
+  const CW = (k) => L.words[k] || {};
+  const bplay = async (el, fn) => { if (app.classList.contains("busy")) return; app.classList.add("busy"); el.classList.add("glow"); await fn(); el.classList.remove("glow"); app.classList.remove("busy"); };
+  const playSeq = async (list, rate) => { for (const s of [].concat(list)) { await play(s, { rate }); await wait(200); } };
+  const NUMW = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+  const ansText = (k) => /^\d+$/.test(k) ? `${NUMW[+k][0].toUpperCase() + NUMW[+k].slice(1)}!` : `It's ${k}.`;
+  const ansAudio = (k) => /^\d+$/.test(k) ? () => word(k) : () => play(CW(k).its);
+  /* thẻ đáp án Unit C: chữ số to · vệt màu · hình · chữ */
+  function optCard(k, as, cls = "") {
+    if (as === "num") return h(`<button class="card ncard ${cls}" data-v="${k}"><span>${k}</span></button>`);
+    if (as === "colour") return h(`<button class="card swc ${cls}" data-v="${k}"><img src="${CW(k).img}" alt=""></button>`);
+    if (as === "word") return h(`<button class="card wbtn sqw ${cls}" data-v="${k}">${wtext(k)}</button>`);   // C-1 (24/11): khung vuông to
+    return h(`<button class="card pic picb ${cls}" data-v="${k}"><img src="${CW(k).img || k}" alt=""></button>`);   // "pic"
+  }
+
+  /* HOW OLD ARE YOU? (C1/C3/C5 thay câu hỏi cảm xúc) — 4 thẻ số tuổi; V1: KHÔNG đọc lời của bé, chỉ ding + sáng rồi Sparky đáp */
+  T.age = async (task) => {
+    const a = abox(50);
+    const btns = task.options.map(o => { const b = optCard(o.n, "num", "age"); a.appendChild(b); return b; });
+    lock(true); await say(task.ask); setPose("listen"); lock(false);
+    if (QA) field.dataset.answer = task.options[0].n;
+    const stopN = nudge({ replay: () => say(task.ask), blink: btns });
+    const id = await new Promise(res => btns.forEach(b => b.onclick = () => res(b.dataset.v))); stopN();
+    const b = btns.find(x => x.dataset.v === id); b.classList.add("right"); burst(b); sfx.ding(); lock(true);
+    await wait(500);
+    const o = task.options.find(x => x.n === id); await say(o.reply, { pose: o.pose || "cheer" });
+    progress(1); lock(false);
+  };
+
+  /* HOW MANY? — nhóm khối (cùng màu) trong khung vàng, chạm chữ số đúng; đúng → nghe số */
+  T.count = async (task) => {
+    lock(true); await say(task.ask);
+    await runQueue(task.items, async (it, first) => {
+      field.innerHTML = "";
+      const q = qbox(30, `<img class="qgrp" src="${CW(it.show || it.n).img}" alt=""><div class="qrow"><b>How many?</b><button class="qspk always" aria-label="Nghe câu hỏi">🔊</button></div>`);
+      const a = abox(62);
+      const btns = it.options.map(d => { const b = optCard(d, "num"); a.appendChild(b); return b; });
+      const prompt = () => play(L.howMany);
+      $(".qspk", q).onclick = () => bplay(q, prompt);
+      lock(true); setPose("talk"); q.classList.add("glow"); await prompt(); q.classList.remove("glow"); setPose("listen");
+      const tries = await choose({ answer: it.n, buttons: btns, prompt, skill: task.skill, label: it.n, first,
+        onRight: async () => { sfx.ding(); await word(it.n); await praise(); } });
+      return tries;
+    });
+  };
+
+  /* NGHE → CHẠM: số (chữ số) · màu (vệt màu) · hình (nhóm khối/vật) · chữ (từ CVC). it.audio = câu ghép (vd "How many?" + "Three!") */
+  T.hearPick = async (task) => {
+    lock(true); await say(task.ask);
+    await runQueue(task.items, async (it, first) => {
+      field.innerHTML = "";
+      const a = abox(task.as === "pic" ? 50 : 56); if (it.options.length > 3) a.classList.add("wrap5");
+      const btns = it.options.map(k => { const b = optCard(k, task.as, it.options.length > 3 ? "sm" : ""); a.appendChild(b); return b; });
+      const prompt = (rate) => it.audio ? playSeq(it.audio, rate) : word(it.w, rate);
+      const L1 = listen(prompt); lock(true); await L1.play();
+      const tries = await choose({ answer: it.w, buttons: btns, prompt, skill: task.skill, label: it.label || it.w, first,
+        onRight: async () => { sfx.ding(); if (!it.audio) await word(it.w); await praise(); } });
+      L1.remove(); return tries;
+    });
+  };
+
+  /* LISTEN & COLOUR (luật 29/10): mỗi câu MỘT vật (hình nét) + lệnh "Colour the banana yellow." → chạm hũ sơn đúng → vật được tô từ dưới lên */
+  T.paint = async (task) => {
+    lock(true); await say(task.ask);
+    await runQueue(task.items, async (it, first) => {
+      field.innerHTML = "";
+      const q = qbox(32, `<div class="pframe"><img class="pline" src="media/c/${it.thing}-line.png" alt=""><img class="pfill" src="media/c/${it.thing}.png" alt=""></div>`);
+      const a = abox(66);
+      const btns = it.options.map(c => { const b = h(`<button class="card pot" data-v="${c}"><img src="media/c/pot-${c}.png" alt=""></button>`); a.appendChild(b); return b; });
+      const prompt = (rate) => play(it.audio, { rate });
+      const L1 = listen(prompt); lock(true); await L1.play();
+      const tries = await choose({ answer: it.colour, buttons: btns, prompt, skill: task.skill, label: `${it.thing} → ${it.colour}`, first,
+        onRight: async () => { sfx.whoosh(); $(".pframe", q).classList.add("filled"); await wait(900); await word(it.colour); await praise(); } });
+      L1.remove(); return tries;
+    });
+  };
+
+  /* DẠY MÀU (luật 29/10): mỗi màu một trang 4 đồ vật quen có màu đó → vệt màu + tên màu hiện dưới, đọc 2 lần, bé nói theo → ➜.
+     grey: đồ vật xám trước, Sparky gọi tên màu thì màu quay lại (C2 Rainbow Land mất màu) */
+  T.colourIntro = async (task) => {
+    lock(true); await say(task.ask, { pose: "talk" });
+    let k = 0;
+    for (const p of task.pages) {
+      field.innerHTML = "";
+      const grid = at(h(`<div class="cthings ${task.grey ? "grey" : ""}" data-n="${p.things.length}">${p.things.map(t => `<div class="card cthing"><img src="media/c/${t}.png" alt=""></div>`).join("")}</div>`), 50, 28);
+      sfx.pop(); await wait(900);
+      const sw = at(h(`<div class="card cswatch reveal"><img src="${CW(p.c).img}" alt=""><b>${p.c}</b></div>`), 50, 57);
+      if (task.grey) { grid.classList.remove("grey"); sfx.whoosh(); }
+      burst(sw, 10);
+      sw.classList.add("glow"); await word(p.c); await wait(500); await word(p.c); sw.classList.remove("glow");
+      setPose("listen"); await echo(sw);
+      sw.onclick = () => bplay(sw, () => word(p.c));
+      k++; progress(k / task.pages.length);
+      lock(false); await go("➜"); lock(true);
+    }
+    lock(false);
+  };
+
+  /* C2: "You brought the colours back!" — cuối chặng màu (luật 29/10: mở khoá màu TRƯỚC phonics): bé chạm từng vệt màu → nghe tên màu → cảnh có màu lại */
+  T.colourBack = async (task) => {
+    const row = at(h(`<div class="cback">${task.colours.map(c => `<button class="card swc" data-v="${c}"><img src="${CW(c).img}" alt=""></button>`).join("")}</div>`), 50, 46);
+    const btns = $$(".swc", row);
+    lock(true); await say(task.ask, { pose: "cheer" }); setPose("listen"); lock(false);
+    let n = 0;
+    if (QA) field.dataset.answer = task.colours[0];
+    let stopN = nudge({ replay: () => say(task.ask), target: btns[0], blink: btns });
+    await new Promise(res => btns.forEach(b => b.onclick = async () => {
+      if (b.classList.contains("right") || app.classList.contains("busy")) return;
+      stopN(); app.classList.add("busy"); b.classList.add("right"); burst(b, 8); sfx.pop(); await word(b.dataset.v); app.classList.remove("busy");
+      n++; progress(n / btns.length);
+      if (n >= btns.length) return res();
+      const left = btns.filter(x => !x.classList.contains("right"));
+      if (QA) field.dataset.answer = left[0].dataset.v;
+      stopN = nudge({ replay: () => say(task.ask), target: left[0], blink: left });
+    }));
+    stopN(); lock(true);
+    if (task.bg) { setBg(task.bg); const st = L.stages[stageNo]; if (st) st.bg = task.bg; }
+    sfx.tada(); btns.forEach(b => burst(b, 6)); await wait(400);
+    if (task.done) await say(task.done, { pose: "clap" });
+    lock(false);
+  };
+
+  /* HỎI – ĐÁP màu/số (luật 29/10: hỏi màu → 2 vệt màu, hỏi số → 2 chữ số; trộn = 1 màu + 1 số, bé chọn câu hợp câu hỏi).
+     mode "answer": nghe câu hỏi → nghe A, B → chạm A/B → nghe câu đúng → lượt bé nói (💡 câu mẫu).
+     mode "ask" (bé tự hỏi): hình → chạm câu hỏi hợp hình (A/B có 🔊) → Sparky trả lời. */
+  T.qa = async (task) => {
+    lock(true); await say(task.ask);
+    let k = 0;
+    for (const it of task.items) {
+      field.innerHTML = "";
+      const asking = task.mode === "ask", qa = it.q === "many" ? L.howMany : L.whatColour, qText = it.q === "many" ? "How many?" : "What colour is it?";
+      const grp = it.q === "many" || /^(g|eggs|dots|fps|n)\b|-\d+$/.test(it.show);
+      const q = qbox(26, `<img class="${grp ? "qgrp" : "qimg"}" src="${CW(it.show).img}" alt="">` +
+        (asking ? "" : `<div class="qrow"><b class="${qText.length > 12 ? "qlong" : ""}">${qText}</b><button class="qspk always" aria-label="Nghe câu hỏi">🔊</button></div>`));
+      const opts = asking ? [["colour", "What colour is it?", () => play(L.whatColour)], ["many", "How many?", () => play(L.howMany)]]
+        : [it.ans, it.wrong].map(x => [x, ansText(x), ansAudio(x)]);
+      const order = opts.map((_, i) => i).sort(() => Math.random() - .5);
+      const a = abox(60), btns = [], spks = [];
+      order.forEach((oi, i) => {
+        const [v, text] = opts[oi];
+        const face = `<span class="abl">${i ? "B" : "A"}</span>`;   // C-2 (24/11 user): thẻ nghe CHỈ A/B + loa — không đưa màu/số vào đáp án
+        const col = h(`<div class="abcol"><button class="abopt ${i ? "b" : "a"} cq" data-v="${v}">${face}<span class="abtx">${text}</span></button>
+          <button class="abspk always" aria-label="Nghe">🔊</button></div>`);
+        a.appendChild(col); btns.push($(".abopt", col)); spks.push($(".abspk", col));
+      });
+      const prompt = asking ? () => say(task.askLine || "c-which-q", { pose: "think" }) : () => play(qa);
+      if (!asking) $(".qspk", q).onclick = () => bplay(q, prompt);
+      spks.forEach((s, i) => s.onclick = () => bplay(btns[i], opts[order[i]][2]));
+      lock(true); setPose("talk");
+      if (!asking) { q.classList.add("glow"); await prompt(); q.classList.remove("glow"); } else await prompt();
+      for (let i = 0; i < btns.length; i++) { btns[i].classList.add("glow"); await opts[order[i]][2](); btns[i].classList.remove("glow"); await wait(250); }
+      setPose("listen");
+      const answer = asking ? it.q : it.ans;
+      await choose({ answer, buttons: btns, prompt, skill: task.skill, label: asking ? `${it.show}: ${qText}` : `${qText} → ${ansText(it.ans)}`, first: k === 0,
+        onRight: async (b) => {
+          sfx.ding(); b.classList.add("said");   // câu đáp hiện ra SAU khi bé chọn đúng
+          if (asking) { await play(qa); await wait(250); await say(it.reply, { pose: "talk" }); }   // Sparky trả lời câu bé hỏi
+          else { await ansAudio(it.ans)(); }
+          await praise(); } });
+      if (task.speak !== false) await sayTurnC(CW(it.show).img, asking ? qText : ansText(it.ans), asking ? () => play(qa) : ansAudio(it.ans), grp);
+      k++; progress(k / task.items.length);
+    }
+  };
+  /* lượt bé nói (giống speakTurn nhưng câu tuỳ ý: "It's red." · "Three!" · "How many?") */
+  async function sayTurnC(src, text, audio, wide) {
+    field.innerHTML = "";
+    at(h(`<div class="card pic big ${wide ? "wideimg" : ""}"><img src="${src}" alt=""></div>`), 50, 30);
+    const tip = at(h(`<div class="tipline">${text}</div>`), 50, 50); tip.classList.add("ghost");
+    const row = at(h(`<div class="sayrow"><button class="side bulb always" aria-label="Gợi ý">💡</button><button class="mic" aria-label="Ghi âm">🎤</button><button class="side skipb" aria-label="Bỏ qua">⏭</button></div>`), 50, 65);
+    const bulb = $(".bulb", row), mic = $(".mic", row), skip = $(".skipb", row);
+    bulb.onclick = async () => { if (app.classList.contains("busy")) return; app.classList.add("busy"); tip.classList.remove("ghost"); tip.classList.add("reveal"); bulb.classList.add("glow"); await audio(); bulb.classList.remove("glow"); app.classList.remove("busy"); };
+    lock(true); await say("fb-yourturn", { pose: "talk" }); setPose("listen"); lock(false);
+    const stopN = nudge({ replay: () => say("fb-yourturn", { pose: "talk" }), target: mic, blink: [bulb] });
+    await new Promise(res => {
+      skip.onclick = () => { stopN(); sfx.tap(); res(); };
+      mic.onclick = async () => { stopN();
+        if (!navigator.mediaDevices?.getUserMedia || QA) return res();
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const rec = new MediaRecorder(stream), chunks = [];
+          rec.ondataavailable = e => chunks.push(e.data);
+          rec.onstop = async () => {
+            stream.getTracks().forEach(t => t.stop()); mic.classList.remove("rec"); lock(true);
+            const url = URL.createObjectURL(new Blob(chunks));
+            await play(url); await wait(250); burst(mic); sfx.ding();
+            tip.classList.remove("ghost"); await audio(); await praise(); lock(false); res();
+          };
+          mic.classList.add("rec"); duck(true); rec.start(); setTimeout(() => rec.state === "recording" && rec.stop(), 3000);
+        } catch (e) { res(); }
+      };
+    });
+  }
+
+  /* ĐỌC CÂU → ĐÚNG/SAI (C5 lần đầu đọc câu): hình + câu hỏi + câu đáp (bé TỰ ĐỌC, không phát trước) → ✓ / ✗;
+     chọn xong nghe cả hỏi–đáp; câu sai → câu đúng hiện ra + nghe câu đúng */
+  T.readTick = async (task) => {
+    lock(true); await say(task.ask);
+    await runQueue(task.items, async (it, first) => {
+      field.innerHTML = "";
+      const ok = it.say === it.truth, qText = it.q === "many" ? "How many?" : "What colour is it?";
+      const sayT = (k) => /^\d+$/.test(k) ? `${ansText(k).slice(0, -1)} (${k})!` : ansText(k);
+      const q = qbox(30, `<img class="${it.q === "many" ? "qgrp" : "qimg"}" src="${CW(it.show).img}" alt=""><div class="rtq"><b class="rq">${qText}</b><b class="ra">${sayT(it.say)}</b></div>`);
+      const a = at(h(`<div class="tickrow"><button class="tickb yes" data-v="yes" aria-label="Đúng">✓</button><button class="tickb no" data-v="no" aria-label="Sai">✗</button></div>`), 50, 64);
+      const btns = $$(".tickb", a);
+      const prompt = () => say(task.readLine || "c-read-it", { pose: "think" });
+      setPose("listen"); lock(false);
+      const tries = await choose({ answer: ok ? "yes" : "no", buttons: btns, prompt, skill: task.skill, label: `${it.show}: "${qText} — ${sayT(it.say)}"`, first,
+        onRight: async () => {
+          q.classList.add("glow"); await play(it.q === "many" ? L.howMany : L.whatColour); await wait(200);
+          if (ok) { await ansAudio(it.say)(); q.classList.remove("glow"); await say("c-right", { pose: "thumbs" }); }
+          else { q.classList.remove("glow"); await say("c-wrong", { pose: "talk" }); $(".ra", q).textContent = sayT(it.truth); $(".ra", q).classList.add("fixed"); q.classList.add("glow"); await ansAudio(it.truth)(); q.classList.remove("glow"); }
+          await praise(); } });
+      return tries;
+    });
+  };
+
   /* QA bố cục: thẻ/khung không chồng nhau, không đè viền khung, không ra ngoài màn, không đè Sparky */
   window.qaLayout = () => {
     const R = el => el.getBoundingClientRect(), A = R(app), bad = [];
@@ -912,6 +1453,10 @@
     $$(".qbox,.qframe,.vpanel", field).forEach(f => { const fr = R(f), bw = parseFloat(getComputedStyle(f).borderLeftWidth) || 0;
       [...f.querySelectorAll(":scope > *")].forEach(c => { if (!c.offsetParent || c.classList.contains("cloth")) return; const r = R(c);
         if (r.left < fr.left + bw + 1 || r.right > fr.right - bw - 1 || r.top < fr.top + bw + 1 || r.bottom > fr.bottom - bw - 1) bad.push("đè viền: " + name(c) + " trong " + name(f)); }); });
+    // 24/11: phần tử con (bóng thoại, mảnh câu, ô chữ…) không được tràn ra ngoài khung chứa
+    field.querySelectorAll(".bub,.chunk,.tile,.bslot,.lcell,.paddle,.pos,.tickb").forEach(e => { if (!e.offsetParent || getComputedStyle(e).visibility === "hidden") return;
+      const box = e.closest(".vpanel,.qbox,.abox,.bslots,.bpool,.lgrid,.paddles,.posrow,.tickrow") || app, r = R(e), b = R(box);
+      if (r.left < b.left - 1 || r.right > b.right + 1 || r.top < b.top - 1 || r.bottom > b.bottom + 1) bad.push("tràn khung: " + name(e) + " trong " + name(box)); });
     field.querySelectorAll(".card.lab b").forEach(t => { const c = t.closest(".card"), r = R(t), cr = R(c);
       if (c.offsetParent && getComputedStyle(t).display !== "none" && (r.left < cr.left - 1 || r.right > cr.right + 1)) bad.push("chữ tràn thẻ: " + name(c)); });
     if (!spk.classList.contains("hide") && !spk.classList.contains("onmap")) tops.forEach(e => { if (hit(R(spk), R(e), 6)) bad.push("đè Sparky: " + name(e)); });
@@ -1141,7 +1686,7 @@
       if (app.classList.contains("locked")) return "locked";
       const q = s => document.querySelector(s);
       for (const [sel, name] of [[".play", "play"], [".go:not(.again)", "go"], [".skipb", "skip-mic"], [".node.now", "node"]]) if (q(sel)) { q(sel).click(); return name; }
-      const tc = q(".tcard"); if (tc && field.dataset.answer) { const btn = tc.querySelector(field.dataset.answer.includes("eye") ? ".eye" : ".ear"); field.dataset.answer = ""; btn.click(); return "teach"; }
+      const tc = q(".tcard"); if (tc && field.dataset.answer) { const an = field.dataset.answer, btn = tc.querySelector(an.includes("eye") || an === "name" ? ".eye" : ".ear"); field.dataset.answer = ""; btn.click(); return "teach"; }
       const c = q(".lcard:not(.done):not(.sm)") || (q(".lcard.sm .lb") && q(".lcard:not(.done)"));
       if (c) { if (app.classList.contains("busy")) return "busy"; c.querySelector(".eye").click(); await wait(60); c.querySelector(".ear").click(); return "letter " + c.dataset.l; }
       const a = field.dataset.answer;
