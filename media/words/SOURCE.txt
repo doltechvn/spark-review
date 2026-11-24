@@ -5,3 +5,42 @@ Từ vựng A1 — GIỌNG MẪU (model) đã khoá của Automation: voiceProfi
   thô + sổ: images/_voice-raw/model/. Kiểm whisper: pen, pencil, book, notebook, bag, rubber — đúng cả 6.
 Web: +150 ms im đầu (không cắt/giãn). Thay speech_v2_00..05.wav (user 17/11: "chữ pencil đọc đang bị sai").
 Câu "It's a …" + "What is it?" vẫn là speech_v2 (lời khác, giọng khác — không trùng lời).
+
+24/11 (A3–A6):
+  dùng lại giọng mẫu Automation (+150 ms im đầu): desk (C5) · pin, top, bin (B5) · pink (C4) · ten (B6) · hot, nose (D3) · nine (C1)
+  thu mới bằng tools/gen_words.py (cùng giọng mẫu, whisper nghe lại): chair board clock laptop pot pan can tin sink net nod nap rose pet fine map pip pop nip toll — khớp 100 %;
+  mat (máy nghe "Matt" = cùng âm), nun (máy nghe "None" = cùng âm /nʌn/). Sổ: images/_voice-raw/model/ledger.json
+Hình nose = Khoa chỉ mũi (D4 đã duyệt: docs/spark-unit-d-lesson4-20261122/images-final/d4-f1-khoa-nose.png, cắt vuông).
+Hình desk/chair/board/clock/laptop + câu speech_v2_19–35 + talk_not.mp4 = app homework Unit A (spark-home-learning/pilot).
+
+24/11 (Unit B): dùng lại giọng mẫu Automation (+150 ms im đầu):
+  teddy-bear.mp3 ← spark-unit-b-lesson5-20261016/audio/out/model-teddy-bear-da9f52.mp3
+  ball.mp3 ← spark-unit-b-lesson4-20261010/audio/out/model-ball-8bec04.mp3
+  doll.mp3 ← spark-unit-b-lesson5-20261016/audio/out/model-doll-8f6314.mp3
+  robot.mp3 ← spark-unit-b-lesson5-20261016/audio/out/model-robot-b232ae.mp3
+  kite.mp3 ← spark-unit-b-lesson4-20261010/audio/out/model-kite-34e1c7.mp3
+  balloon.mp3 ← spark-unit-b-lesson4-20261010/audio/out/model-balloon-326de7.mp3
+  puzzle.mp3 ← spark-unit-b-lesson4-20261010/audio/out/model-puzzle-ddcb4b.mp3
+  toy-car.mp3 ← spark-unit-b-lesson4-20261010/audio/out/model-toy-car-d96bb2.mp3
+  bat.mp3 ← spark-unit-b-lesson4-20261010/audio/out/model-bat-9b64d4.mp3
+  tap.mp3 ← spark-unit-c-lesson5-20261105/audio/out/model-tap-25f30d.mp3
+  tug.mp3 ← spark-unit-b-lesson4-20261010/audio/out/model-tug-8caaad.mp3
+  mug.mp3 ← spark-unit-b-lesson4-20261010/audio/out/model-mug-41ecea.mp3
+  bed.mp3 ← spark-unit-c-lesson1-20261023/audio/out/model-bed-fefe23.mp3
+  bus.mp3 ← spark-unit-b-lesson5-20261016/audio/out/model-bus-32c70c.mp3
+  box.mp3 ← spark-unit-c-lesson1-20261023/audio/out/model-box-c7d8a6.mp3
+  bear.mp3 ← spark-unit-b-lesson5-20261016/audio/out/model-bear-09f5ed.mp3
+  pear.mp3 ← spark-unit-b-lesson5-20261016/audio/out/model-pear-3e2bf5.mp3
+  bun.mp3 ← spark-unit-b-lesson5-20261016/audio/out/model-bun-b14615.mp3
+  sun.mp3 ← spark-unit-b-lesson5-20261016/audio/out/model-sun-22fa61.mp3
+  bell.mp3 ← spark-unit-b-lesson5-20261016/audio/out/model-bell-04bf88.mp3
+  well.mp3 ← spark-unit-b-lesson5-20261016/audio/out/model-well-bd8483.mp3
+  bug.mp3 ← spark-unit-b-lesson5-20261016/audio/out/model-bug-688585.mp3
+  tab.mp3 ← spark-unit-b-lesson6-20261018/audio/out/model-tab-e97460.mp3
+  tub.mp3 ← spark-unit-b-lesson6-20261018/audio/out/model-tub-189572.mp3
+  bit.mp3 ← spark-unit-b-lesson6-20261018/audio/out/model-bit-026e99.mp3
+  but.mp3 ← spark-unit-b-lesson6-20261018/audio/out/model-but-786e97.mp3
+  bib.mp3 ← spark-unit-b-lesson6-20261018/audio/out/model-bib-428ea5.mp3
+  bet.mp3 ← spark-unit-b-lesson6-20261018/audio/out/model-bet-c03381.mp3
+  cat.mp3 ← spark-unit-b-lesson6-20261018/audio/out/model-cat-9d989e.mp3
+  tot.mp3 ← spark-unit-b-lesson6-20261018/audio/out/model-tot-ac5710.mp3

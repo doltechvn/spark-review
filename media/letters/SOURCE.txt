@@ -9,3 +9,6 @@ Thay cho phoneme_*.m4a (spark-home-learning) + tên chữ Sparky đọc máy —
 (ffmpeg adelay/apad, KHÔNG cắt/giãn tiếng). Bản gốc nguyên byte: orig/. Web còn phát qua WebAudio (giải mã trước) để không mất đầu âm.
 
 23/11 (A2): name-p.mp3 ← model-p-511993.mp3 (B4 Letter B Day, docs/spark-unit-b-lesson4-20261010/audio/out/) — cùng bộ giọng tên chữ; + 180 ms im đầu + 250 ms im đuôi như các chữ khác. Bản gốc: orig/model-p-511993.mp3. CHƯA có âm /p/ (A3 mới dạy).
+
+24/11 (Unit B): name-t ← model-t-c2c53d.mp3, name-b ← model-b-ae4f28.mp3 (B4 Letter B Day, docs/spark-unit-b-lesson4-20261010/audio/out/) + 180 ms im đầu + 250 ms im đuôi; gốc: orig/.
+  sound-t, sound-b ← programs/spark/audio/phonemes/v2-20261107/t.mp3, b.mp3 (phonemes.json › newLessons — cùng cách sound-p/sound-n của A3/A5, nguyên byte).

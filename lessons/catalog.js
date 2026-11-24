@@ -2,7 +2,7 @@
    ready: true = đã có lessons/<id>.js (bài chơi được). Thêm bài mới: đặt ready + pic, thêm lời "home-<id>" rồi chạy
    python tools/gen_voice.py catalog   → media/voice/<id>.mp3
    Bìa unit: media/covers/cover-<k>.png (tools/gen_scenes.py home), Unit A dùng media/bag.png. */
-/* Bản đưa lên (24/11): chỉ Unit A đã duyệt mở chơi; B, C đang chờ duyệt nên tắt ready ở đây (bản làm việc web/lessons/catalog.js vẫn bật). */
+/* Bản đưa lên (24/11): Unit A + Unit B đã duyệt mở chơi; C đang chờ duyệt nên tắt ready ở đây (bản làm việc web/lessons/catalog.js vẫn bật). */
 window.CATALOG = {
   units: [
     { k: "A", name: "Hello School!", color: ["#e2794a", "#c25e30"], cover: "media/bag.png", lessons: [
@@ -10,8 +10,8 @@ window.CATALOG = {
       { id: "A2", title: "Letter P Day", ready: true, pic: "media/scenes/a2-intro.jpg" }, { id: "A3", title: "P's Secret Sound", ready: true, pic: "media/scenes/a3-intro.jpg" }, { id: "A4", title: "Letter N Day", ready: true, pic: "media/scenes/a4-intro.jpg" },
       { id: "A5", title: "N's Secret Sound", ready: true, pic: "media/scenes/a5-intro.jpg" }, { id: "A6", title: "Hello School Showcase", ready: true, pic: "media/scenes/a6-intro.jpg" }] },
     { k: "B", name: "My Toys", color: ["#4fa396", "#357d72"], cover: "media/covers/cover-b.png", lessons: [
-      { id: "B1", title: "Sparky's Toy Box", pic: "media/scenes/b1-intro.jpg" }, { id: "B2", title: "Letter T Day", pic: "media/scenes/b2-intro.jpg" }, { id: "B3", title: "More Toys with Sparky", pic: "media/scenes/b3-intro.jpg" },
-      { id: "B4", title: "Letter B Day", pic: "media/scenes/b4-intro.jpg" }, { id: "B5", title: "The /b/ Toy Hunt", pic: "media/scenes/b5-intro.jpg" }, { id: "B6", title: "Toy Box Showcase", pic: "media/scenes/b6-intro.jpg" }] },
+      { id: "B1", title: "Sparky's Toy Box", ready: true, pic: "media/scenes/b1-intro.jpg" }, { id: "B2", title: "Letter T Day", ready: true, pic: "media/scenes/b2-intro.jpg" }, { id: "B3", title: "More Toys with Sparky", ready: true, pic: "media/scenes/b3-intro.jpg" },
+      { id: "B4", title: "Letter B Day", ready: true, pic: "media/scenes/b4-intro.jpg" }, { id: "B5", title: "The /b/ Toy Hunt", ready: true, pic: "media/scenes/b5-intro.jpg" }, { id: "B6", title: "Toy Box Showcase", ready: true, pic: "media/scenes/b6-intro.jpg" }] },
     { k: "C", name: "Colours & Numbers", color: ["#7a5fd6", "#5a43ad"], cover: "media/covers/cover-c.png", lessons: [
       { id: "C1", title: "Counting Numbers", pic: "media/scenes/c1-intro.jpg" }, { id: "C2", title: "Letter R Day", pic: "media/scenes/c2-intro.jpg" }, { id: "C3", title: "The /r/ Rainbow Rescue", pic: "media/scenes/c3-intro.jpg" },
       { id: "C4", title: "Letter D Day", pic: "media/scenes/c4-intro.jpg" }, { id: "C5", title: "The /d/ Dot Hunt", pic: "media/scenes/c5-intro.jpg" }, { id: "C6", title: "Rainbow & Numbers Showcase", pic: "media/scenes/c6-intro.jpg" }] },
